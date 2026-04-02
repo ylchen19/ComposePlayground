@@ -1,0 +1,23 @@
+*.iml
+.gradle
+/local.properties
+/.idea/caches
+/.idea/libraries
+/.idea/modules.xml
+/.idea/workspace.xml
+/.idea/navEditor.xml
+/.idea/assetWizardSettings.xml
+.DS_Store
+/build
+/captures
+.externalNativeBuild
+.cxx
+local.properties
+
+# AI Agent skills (auto-generated)
+# 實體 skill 檔案在 .agents/skills/ — 這要進 git
+# 其他 agent 設定目錄只保留 skills symlinks
+.claude/*
+!.claude/skills
+.cursor/*
+!.cursor/skills
