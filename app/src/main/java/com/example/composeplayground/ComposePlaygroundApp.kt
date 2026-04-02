@@ -3,6 +3,7 @@ package com.example.composeplayground
 import android.app.Application
 import com.example.composeplayground.di.appModule
 import com.example.composeplayground.di.networkModule
+import com.example.composeplayground.di.pokemonModule
 import org.koin.android.ext.koin.androidContext
 import org.koin.core.context.startKoin
 
@@ -11,7 +12,7 @@ class ComposePlaygroundApp : Application() {
         super.onCreate()
         startKoin {
             androidContext(this@ComposePlaygroundApp)
-            modules(appModule, networkModule)
+            modules(appModule, networkModule, pokemonModule)
         }
     }
 }

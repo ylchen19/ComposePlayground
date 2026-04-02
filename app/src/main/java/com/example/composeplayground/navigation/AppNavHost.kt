@@ -7,9 +7,13 @@ import androidx.navigation3.runtime.entryProvider
 import androidx.navigation3.runtime.rememberNavBackStack
 import androidx.navigation3.runtime.rememberSaveableStateHolderNavEntryDecorator
 import androidx.navigation3.ui.NavDisplay
-import com.example.composeplayground.ui.screen.DetailScreen
-import com.example.composeplayground.ui.screen.HomeScreen
 import com.example.composeplayground.ui.screen.SettingsScreen
+import com.example.composeplayground.ui.screen.pokemon.PokemonDetailScreen
+import com.example.composeplayground.ui.screen.pokemon.PokemonDetailViewModel
+import com.example.composeplayground.ui.screen.pokemon.PokemonListScreen
+import com.example.composeplayground.ui.screen.pokemon.PokemonListViewModel
+import org.koin.compose.viewmodel.koinViewModel
+import org.koin.core.parameter.parametersOf
 
 @Composable
 fun AppNavHost(modifier: Modifier = Modifier) {
@@ -25,14 +29,19 @@ fun AppNavHost(modifier: Modifier = Modifier) {
         ),
         entryProvider = entryProvider {
             entry<Home> {
-                HomeScreen(
-                    onNavigateToDetail = { id -> backStack.add(Detail(id)) },
+                val viewModel = koinViewModel<PokemonListViewModel>()
+                PokemonListScreen(
+                    viewModel = viewModel,
+                    onNavigateToDetail = { id -> backStack.add(PokemonDetail(id)) },
                     onNavigateToSettings = { backStack.add(Settings) },
                 )
             }
-            entry<Detail> { key ->
-                DetailScreen(
-                    itemId = key.itemId,
+            entry<PokemonDetail> { key ->
+                val viewModel = koinViewModel<PokemonDetailViewModel>(
+                    parameters = { parametersOf(key.pokemonId) },
+                )
+                PokemonDetailScreen(
+                    viewModel = viewModel,
                     onBack = { backStack.removeLastOrNull() },
                 )
             }
