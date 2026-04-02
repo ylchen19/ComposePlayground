@@ -12,6 +12,7 @@ import com.example.composeplayground.ui.screen.pokemon.PokemonDetailScreen
 import com.example.composeplayground.ui.screen.pokemon.PokemonDetailViewModel
 import com.example.composeplayground.ui.screen.pokemon.PokemonListScreen
 import com.example.composeplayground.ui.screen.pokemon.PokemonListViewModel
+import com.example.composeplayground.ui.theme.ThemeViewModel
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
 
@@ -46,7 +47,9 @@ fun AppNavHost(modifier: Modifier = Modifier) {
                 )
             }
             entry<Settings> {
+                val themeViewModel = koinViewModel<ThemeViewModel>()
                 SettingsScreen(
+                    themeViewModel = themeViewModel,
                     onBack = { backStack.removeLastOrNull() },
                 )
             }

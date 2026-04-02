@@ -67,6 +67,7 @@ dependencies {
     implementation(libs.material3.adaptive.navigation3)
     implementation(libs.paging.runtime)
     implementation(libs.paging.compose)
+    implementation(libs.androidx.datastore.preferences)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
