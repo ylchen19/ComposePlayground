@@ -29,12 +29,14 @@ import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
@@ -43,8 +45,11 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.example.composeplayground.ui.theme.PokemonRed
+import com.example.composeplayground.ui.theme.PokemonYellow
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.paging.LoadState
 import androidx.paging.compose.collectAsLazyPagingItems
@@ -73,22 +78,23 @@ fun PokemonListScreen(
                     Text(
                         text = "Pokédex",
                         fontWeight = FontWeight.Bold,
+                        color = PokemonYellow,
                     )
                 },
                 actions = {
                     IconButton(onClick = viewModel::toggleViewMode) {
                         if (uiState.viewMode == ViewMode.Grid) {
-                            Icon(Icons.AutoMirrored.Filled.List, contentDescription = "Switch to list")
+                            Icon(Icons.AutoMirrored.Filled.List, contentDescription = "Switch to list", tint = Color.White)
                         } else {
-                            GridViewIcon()
+                            GridViewIcon(color = Color.White)
                         }
                     }
                     IconButton(onClick = onNavigateToSettings) {
-                        Icon(Icons.Default.Settings, contentDescription = "Settings")
+                        Icon(Icons.Default.Settings, contentDescription = "Settings", tint = Color.White)
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.surface,
+                    containerColor = PokemonRed,
                 ),
             )
         },
@@ -107,7 +113,7 @@ fun PokemonListScreen(
                     .padding(horizontal = 16.dp, vertical = 8.dp),
                 placeholder = { Text("Search Pokémon...") },
                 leadingIcon = {
-                    Icon(Icons.Default.Search, contentDescription = "Search")
+                    Icon(Icons.Default.Search, contentDescription = "Search", tint = PokemonRed)
                 },
                 trailingIcon = {
                     if (uiState.searchQuery.isNotEmpty()) {
@@ -118,6 +124,11 @@ fun PokemonListScreen(
                 },
                 singleLine = true,
                 shape = MaterialTheme.shapes.large,
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedBorderColor = PokemonRed,
+                    focusedLabelColor = PokemonRed,
+                    cursorColor = PokemonRed,
+                ),
             )
 
             // Type filter chips
@@ -189,7 +200,12 @@ fun PokemonListScreen(
                                     color = MaterialTheme.colorScheme.error,
                                 )
                                 Spacer(modifier = Modifier.height(16.dp))
-                                Button(onClick = { pagingItems.retry() }) {
+                                Button(
+                                    onClick = { pagingItems.retry() },
+                                    colors = ButtonDefaults.buttonColors(
+                                        containerColor = PokemonRed,
+                                    ),
+                                ) {
                                     Icon(Icons.Default.Refresh, contentDescription = null)
                                     Spacer(modifier = Modifier.width(8.dp))
                                     Text("Retry")
@@ -281,8 +297,7 @@ fun PokemonListScreen(
 }
 
 @Composable
-private fun GridViewIcon() {
-    val color = MaterialTheme.colorScheme.onSurface
+private fun GridViewIcon(color: Color = MaterialTheme.colorScheme.onSurface) {
     Row(horizontalArrangement = Arrangement.spacedBy(3.dp)) {
         Column(verticalArrangement = Arrangement.spacedBy(3.dp)) {
             Box(

@@ -1,6 +1,8 @@
 package com.example.composeplayground.ui.screen.pokemon.components
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
@@ -16,12 +18,12 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
 import com.example.composeplayground.data.model.Pokemon
 import java.util.Locale
@@ -33,13 +35,15 @@ fun PokemonGridCard(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val primaryTypeColor = pokemonTypeColors[pokemon.types.firstOrNull()] ?: Color.Gray
+
     Card(
         onClick = onClick,
         modifier = modifier,
         shape = RoundedCornerShape(16.dp),
         elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surface,
+            containerColor = primaryTypeColor.copy(alpha = 0.15f),
         ),
     ) {
         Column(
@@ -50,19 +54,36 @@ fun PokemonGridCard(
             Text(
                 text = "#${pokemon.id.toString().padStart(3, '0')}",
                 style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                color = primaryTypeColor.copy(alpha = 0.7f),
+                fontWeight = FontWeight.Bold,
             )
 
-            // Pokemon image
-            AsyncImage(
-                model = pokemon.imageUrl,
-                contentDescription = pokemon.name,
+            // Pokemon image with type-colored background
+            Box(
                 modifier = Modifier
                     .fillMaxWidth()
                     .aspectRatio(1f)
-                    .clip(RoundedCornerShape(12.dp)),
-                contentScale = ContentScale.Fit,
-            )
+                    .clip(RoundedCornerShape(12.dp))
+                    .background(primaryTypeColor.copy(alpha = 0.2f)),
+                contentAlignment = Alignment.Center,
+            ) {
+                // Pokeball decoration circle
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth(0.85f)
+                        .aspectRatio(1f)
+                        .clip(RoundedCornerShape(50))
+                        .background(Color.White.copy(alpha = 0.15f)),
+                )
+                AsyncImage(
+                    model = pokemon.imageUrl,
+                    contentDescription = pokemon.name,
+                    modifier = Modifier
+                        .fillMaxWidth(0.85f)
+                        .aspectRatio(1f),
+                    contentScale = ContentScale.Fit,
+                )
+            }
 
             // Pokemon name
             Text(
@@ -72,7 +93,9 @@ fun PokemonGridCard(
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
                 textAlign = TextAlign.Center,
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 6.dp),
             )
 
             // Type labels
