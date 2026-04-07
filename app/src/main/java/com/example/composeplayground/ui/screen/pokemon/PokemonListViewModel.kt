@@ -15,7 +15,6 @@ import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.distinctUntilChanged
@@ -36,13 +35,13 @@ class PokemonListViewModel(
     private val repository: PokemonRepository,
 ) : ViewModel() {
 
-    private val _uiState = MutableStateFlow(PokemonListUiState())
-    val uiState: StateFlow<PokemonListUiState> = _uiState.asStateFlow()
+    val uiState: StateFlow<PokemonListUiState>
+        field = MutableStateFlow(PokemonListUiState())
 
-    // 搜尋加 debounce、型別切換即時生效，兩者皆直接從 _uiState 衍生，消除重複 source of truth
+    // 搜尋加 debounce、型別切換即時生效，兩者皆直接從 uiState 衍生，消除重複 source of truth
     val pokemonPagingFlow: Flow<PagingData<Pokemon>> = combine(
-        _uiState.map { it.searchQuery }.distinctUntilChanged().debounce(300),
-        _uiState.map { it.selectedType }.distinctUntilChanged(),
+        uiState.map { it.searchQuery }.distinctUntilChanged().debounce(300),
+        uiState.map { it.selectedType }.distinctUntilChanged(),
     ) { query, type ->
         query to type
     }.flatMapLatest { (query, type) ->
@@ -69,16 +68,16 @@ class PokemonListViewModel(
     )
 
     fun toggleViewMode() {
-        _uiState.update {
+        uiState.update {
             it.copy(viewMode = if (it.viewMode == ViewMode.Grid) ViewMode.List else ViewMode.Grid)
         }
     }
 
     fun updateSearchQuery(query: String) {
-        _uiState.update { it.copy(searchQuery = query) }
+        uiState.update { it.copy(searchQuery = query) }
     }
 
     fun selectType(type: String?) {
-        _uiState.update { it.copy(selectedType = type) }
+        uiState.update { it.copy(selectedType = type) }
     }
 }

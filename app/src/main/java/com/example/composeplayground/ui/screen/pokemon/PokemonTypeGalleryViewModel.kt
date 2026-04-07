@@ -6,7 +6,6 @@ import com.example.composeplayground.data.model.Pokemon
 import com.example.composeplayground.data.repository.PokemonRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
@@ -31,8 +30,8 @@ class PokemonTypeGalleryViewModel(
     private val repository: PokemonRepository,
 ) : ViewModel() {
 
-    private val _uiState = MutableStateFlow(PokemonTypeGalleryUiState())
-    val uiState: StateFlow<PokemonTypeGalleryUiState> = _uiState.asStateFlow()
+    val uiState: StateFlow<PokemonTypeGalleryUiState>
+        field = MutableStateFlow(PokemonTypeGalleryUiState())
 
     init {
         loadAllTypes()
@@ -43,7 +42,7 @@ class PokemonTypeGalleryViewModel(
             viewModelScope.launch {
                 runCatching { repository.fetchPokemonByType(typeName) }
                     .onSuccess { pokemon ->
-                        _uiState.update { state ->
+                        uiState.update { state ->
                             state.copy(
                                 sections = state.sections.map { section ->
                                     if (section.typeName == typeName) {
@@ -59,7 +58,7 @@ class PokemonTypeGalleryViewModel(
                         }
                     }
                     .onFailure {
-                        _uiState.update { state ->
+                        uiState.update { state ->
                             state.copy(
                                 sections = state.sections.map { section ->
                                     if (section.typeName == typeName) {

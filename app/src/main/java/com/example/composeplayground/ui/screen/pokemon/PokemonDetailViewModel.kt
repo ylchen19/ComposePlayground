@@ -6,7 +6,6 @@ import com.example.composeplayground.data.model.PokemonDetail
 import com.example.composeplayground.data.repository.PokemonRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
 sealed interface PokemonDetailUiState {
@@ -20,8 +19,8 @@ class PokemonDetailViewModel(
     private val repository: PokemonRepository,
 ) : ViewModel() {
 
-    private val _uiState = MutableStateFlow<PokemonDetailUiState>(PokemonDetailUiState.Loading)
-    val uiState: StateFlow<PokemonDetailUiState> = _uiState.asStateFlow()
+    val uiState: StateFlow<PokemonDetailUiState>
+        field = MutableStateFlow<PokemonDetailUiState>(PokemonDetailUiState.Loading)
 
     init {
         loadPokemonDetail()
@@ -32,13 +31,13 @@ class PokemonDetailViewModel(
     }
 
     private fun loadPokemonDetail() {
-        _uiState.value = PokemonDetailUiState.Loading
+        uiState.value = PokemonDetailUiState.Loading
         viewModelScope.launch {
             try {
                 val detail = repository.fetchPokemonDetail(pokemonId)
-                _uiState.value = PokemonDetailUiState.Success(detail)
+                uiState.value = PokemonDetailUiState.Success(detail)
             } catch (e: Exception) {
-                _uiState.value = PokemonDetailUiState.Error(
+                uiState.value = PokemonDetailUiState.Error(
                     e.localizedMessage ?: "Failed to load Pokémon details"
                 )
             }
