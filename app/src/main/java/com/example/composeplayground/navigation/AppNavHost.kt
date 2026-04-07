@@ -12,6 +12,8 @@ import com.example.composeplayground.ui.screen.pokemon.PokemonDetailScreen
 import com.example.composeplayground.ui.screen.pokemon.PokemonDetailViewModel
 import com.example.composeplayground.ui.screen.pokemon.PokemonListScreen
 import com.example.composeplayground.ui.screen.pokemon.PokemonListViewModel
+import com.example.composeplayground.ui.screen.pokemon.PokemonTypeGalleryScreen
+import com.example.composeplayground.ui.screen.pokemon.PokemonTypeGalleryViewModel
 import com.example.composeplayground.ui.theme.ThemeViewModel
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
@@ -54,6 +56,7 @@ fun AppNavHost(modifier: Modifier = Modifier) {
                     viewModel = viewModel,
                     onNavigateToDetail = { id -> backStack.add(PokemonDetail(id)) },
                     onNavigateToSettings = { backStack.add(Settings) },
+                    onNavigateToTypeGallery = { backStack.add(PokemonTypeGallery) },
                 )
             }
             // 詳細頁：透過 key.pokemonId 以 parametersOf 注入 ViewModel
@@ -71,6 +74,15 @@ fun AppNavHost(modifier: Modifier = Modifier) {
                 val themeViewModel = koinViewModel<ThemeViewModel>()
                 SettingsScreen(
                     themeViewModel = themeViewModel,
+                    onBack = { backStack.removeLastOrNull() },
+                )
+            }
+            // 屬性圖鑑：依屬性分組，每種屬性一列 LazyRow
+            entry<PokemonTypeGallery> {
+                val viewModel = koinViewModel<PokemonTypeGalleryViewModel>()
+                PokemonTypeGalleryScreen(
+                    viewModel = viewModel,
+                    onNavigateToDetail = { id -> backStack.add(PokemonDetail(id)) },
                     onBack = { backStack.removeLastOrNull() },
                 )
             }

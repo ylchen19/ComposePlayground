@@ -4,6 +4,7 @@ import com.example.composeplayground.data.repository.PokemonRepository
 import com.example.composeplayground.data.repository.PokemonRepositoryImpl
 import com.example.composeplayground.ui.screen.pokemon.PokemonDetailViewModel
 import com.example.composeplayground.ui.screen.pokemon.PokemonListViewModel
+import com.example.composeplayground.ui.screen.pokemon.PokemonTypeGalleryViewModel
 import org.koin.core.module.dsl.viewModel
 import org.koin.dsl.module
 
@@ -30,4 +31,5 @@ val pokemonModule = module {
     viewModel { PokemonListViewModel(get()) }
     // pokemonId 由導航層透過 parametersOf 傳入，對應 AppNavHost 的 entry<PokemonDetail>
     viewModel { params -> PokemonDetailViewModel(pokemonId = params.get(), repository = get()) }
+    viewModel { PokemonTypeGalleryViewModel(get()) }
 }

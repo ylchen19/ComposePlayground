@@ -24,6 +24,7 @@ import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.List
+import androidx.compose.material.icons.filled.Category
 import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Search
@@ -67,6 +68,7 @@ fun PokemonListScreen(
     viewModel: PokemonListViewModel,
     onNavigateToDetail: (Int) -> Unit,
     onNavigateToSettings: () -> Unit,
+    onNavigateToTypeGallery: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -79,6 +81,7 @@ fun PokemonListScreen(
                 viewMode = uiState.viewMode,
                 onToggleViewMode = viewModel::toggleViewMode,
                 onNavigateToSettings = onNavigateToSettings,
+                onNavigateToTypeGallery = onNavigateToTypeGallery,
             )
         },
     ) { innerPadding ->
@@ -114,6 +117,7 @@ private fun PokemonListTopBar(
     viewMode: ViewMode,
     onToggleViewMode: () -> Unit,
     onNavigateToSettings: () -> Unit,
+    onNavigateToTypeGallery: () -> Unit,
 ) {
     TopAppBar(
         title = {
@@ -124,6 +128,9 @@ private fun PokemonListTopBar(
             )
         },
         actions = {
+            IconButton(onClick = onNavigateToTypeGallery) {
+                Icon(Icons.Default.Category, contentDescription = "類型圖鑑", tint = Color.White)
+            }
             IconButton(onClick = onToggleViewMode) {
                 if (viewMode == ViewMode.Grid) {
                     Icon(Icons.AutoMirrored.Filled.List, contentDescription = "Switch to list", tint = Color.White)

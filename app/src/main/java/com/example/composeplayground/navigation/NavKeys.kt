@@ -28,3 +28,7 @@ data class PokemonDetail(val pokemonId: Int) : NavKey
 /** 設定頁（主題切換等偏好設定），無需額外參數。 */
 @Serializable
 data object Settings : NavKey
+
+/** 依屬性分類的寶可夢圖鑑，每種屬性顯示為一列 LazyRow。 */
+@Serializable
+data object PokemonTypeGallery : NavKey
