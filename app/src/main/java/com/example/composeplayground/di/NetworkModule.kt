@@ -18,12 +18,32 @@ import org.koin.core.qualifier.named
 import org.koin.dsl.module
 import java.io.File
 
+/**
+ * 通用網路層的 Koin 模組，提供具備認證與快取能力的 [HttpClient] 與 [ApiService]。
+ *
+ * ## 依賴圖
+ * ```
+ * baseUrl / refreshUrl (named)
+ *      ↓
+ * bareClient (named)  →  TokenProvider  →  HttpClientFactory  →  HttpClient
+ *                                                                      ↓
+ * ConnectivityObserver  ─────────────────────────────────────→  ApiService (KtorApiService)
+ * ```
+ *
+ * ## 使用說明
+ * - `baseUrl` / `refreshUrl` 預設為範例值，**正式串接時請在此覆寫**
+ * - `bareClient` 為不含 Auth 插件的裸客戶端，僅供 [InMemoryTokenProvider] 刷新 Token 使用，
+ *   避免 Auth 插件觸發遞迴刷新
+ * - 快取目錄設為 `context.cacheDir/http_cache`，由 Android 在儲存空間不足時自動清理
+ */
 val networkModule = module {
 
-    // Connectivity observer
+    // ── 連線監聽 ──────────────────────────────────────────────────────────────
     single<ConnectivityObserver> { NetworkConnectivityObserver(androidContext()) }
 
-    // Bare HttpClient for token refresh (no Auth plugin to avoid recursion)
+    // ── Token 管理 ────────────────────────────────────────────────────────────
+
+    // 不含 Auth 插件的裸客戶端，專供 Token 刷新使用，防止遞迴授權
     single(named("bareClient")) {
         HttpClient(OkHttp) {
             install(ContentNegotiation) {
@@ -32,7 +52,6 @@ val networkModule = module {
         }
     }
 
-    // Token management
     single<TokenProvider> {
         InMemoryTokenProvider(
             bareClient = get(named("bareClient")),
@@ -40,17 +59,20 @@ val networkModule = module {
         )
     }
 
-    // Cache configuration
+    // ── HttpClient ────────────────────────────────────────────────────────────
+
+    // OkHttp 磁碟快取，存放於 cacheDir/http_cache，由系統自動管理容量
     single { CacheConfig(cacheDirectory = File(androidContext().cacheDir, "http_cache")) }
 
-    // HttpClient factory & instance
     single { HttpClientFactory(get(), get()) }
+
+    // 由工廠建立已套用 Auth / Logging / ContentNegotiation 的完整客戶端
     single { get<HttpClientFactory>().create(baseUrl = get(named("baseUrl"))) }
 
-    // API service
+    // ── API 服務 ──────────────────────────────────────────────────────────────
     single<ApiService> { KtorApiService(get(), get()) }
 
-    // Base URL & refresh URL — override these in your app configuration
+    // ── URL 設定（正式串接時請覆寫以下兩個 named 綁定）─────────────────────────
     single(named("baseUrl")) { "https://api.example.com/" }
     single(named("refreshUrl")) { "https://api.example.com/auth/refresh" }
 }
