@@ -61,75 +61,86 @@ fun SettingsScreen(
                 .padding(innerPadding)
                 .verticalScroll(rememberScrollState()),
         ) {
-            // Dark Mode section
-            Text(
-                text = "Dark Mode",
-                style = MaterialTheme.typography.titleMedium,
-                modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
+            DarkModeSection(
+                selectedOption = themeConfig.darkModeOption,
+                onOptionSelected = themeViewModel::setDarkModeOption,
             )
-            Column(modifier = Modifier.selectableGroup()) {
-                DarkModeOption.entries.forEach { option ->
-                    val label = when (option) {
-                        DarkModeOption.SYSTEM -> "Follow system"
-                        DarkModeOption.LIGHT -> "Light"
-                        DarkModeOption.DARK -> "Dark"
-                    }
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .selectable(
-                                selected = themeConfig.darkModeOption == option,
-                                onClick = { themeViewModel.setDarkModeOption(option) },
-                                role = Role.RadioButton,
-                            )
-                            .padding(horizontal = 16.dp, vertical = 12.dp),
-                    ) {
-                        RadioButton(
-                            selected = themeConfig.darkModeOption == option,
-                            onClick = null,
-                        )
-                        Text(
-                            text = label,
-                            style = MaterialTheme.typography.bodyLarge,
-                            modifier = Modifier.padding(start = 16.dp),
-                        )
-                    }
-                }
-            }
-
             Spacer(modifier = Modifier.height(16.dp))
-
-            // Dynamic Color section (Android 12+)
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-                Text(
-                    text = "Dynamic Color",
-                    style = MaterialTheme.typography.titleMedium,
-                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
+                DynamicColorSection(
+                    enabled = themeConfig.dynamicColor,
+                    onToggle = themeViewModel::setDynamicColor,
                 )
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 16.dp, vertical = 8.dp),
-                ) {
-                    Column(modifier = Modifier.weight(1f)) {
-                        Text(
-                            text = "Use wallpaper colors",
-                            style = MaterialTheme.typography.bodyLarge,
-                        )
-                        Text(
-                            text = "Apply colors from your wallpaper to the app theme",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        )
-                    }
-                    Switch(
-                        checked = themeConfig.dynamicColor,
-                        onCheckedChange = { themeViewModel.setDynamicColor(it) },
-                    )
-                }
             }
         }
+    }
+}
+
+// ── Private composables ──────────────────────────────────────────────────────
+
+@Composable
+private fun DarkModeSection(
+    selectedOption: DarkModeOption,
+    onOptionSelected: (DarkModeOption) -> Unit,
+) {
+    Text(
+        text = "Dark Mode",
+        style = MaterialTheme.typography.titleMedium,
+        modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
+    )
+    Column(modifier = Modifier.selectableGroup()) {
+        DarkModeOption.entries.forEach { option ->
+            val label = when (option) {
+                DarkModeOption.SYSTEM -> "Follow system"
+                DarkModeOption.LIGHT -> "Light"
+                DarkModeOption.DARK -> "Dark"
+            }
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .selectable(
+                        selected = selectedOption == option,
+                        onClick = { onOptionSelected(option) },
+                        role = Role.RadioButton,
+                    )
+                    .padding(horizontal = 16.dp, vertical = 12.dp),
+            ) {
+                RadioButton(selected = selectedOption == option, onClick = null)
+                Text(
+                    text = label,
+                    style = MaterialTheme.typography.bodyLarge,
+                    modifier = Modifier.padding(start = 16.dp),
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun DynamicColorSection(
+    enabled: Boolean,
+    onToggle: (Boolean) -> Unit,
+) {
+    Text(
+        text = "Dynamic Color",
+        style = MaterialTheme.typography.titleMedium,
+        modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
+    )
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 8.dp),
+    ) {
+        Column(modifier = Modifier.weight(1f)) {
+            Text(text = "Use wallpaper colors", style = MaterialTheme.typography.bodyLarge)
+            Text(
+                text = "Apply colors from your wallpaper to the app theme",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
+        Switch(checked = enabled, onCheckedChange = onToggle)
     }
 }

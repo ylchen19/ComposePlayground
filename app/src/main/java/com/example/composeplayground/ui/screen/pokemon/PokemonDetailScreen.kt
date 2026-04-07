@@ -76,90 +76,88 @@ fun PokemonDetailScreen(
     modifier: Modifier = Modifier,
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
-    val topBarColor = when (val state = uiState) {
-        is PokemonDetailUiState.Success -> {
-            pokemonTypeColors[state.pokemon.types.firstOrNull()] ?: PokemonRed
-        }
-        else -> PokemonRed
-    }
 
     Scaffold(
         modifier = modifier,
         topBar = {
-            TopAppBar(
-                title = {
-                    when (val state = uiState) {
-                        is PokemonDetailUiState.Success -> Text(
-                            state.pokemon.name.replaceFirstChar {
-                                it.titlecase(Locale.ROOT)
-                            },
-                            fontWeight = FontWeight.Bold,
-                            color = Color.White,
-                        )
-                        else -> Text("Pokémon Detail", color = Color.White)
-                    }
-                },
-                navigationIcon = {
-                    IconButton(onClick = onBack) {
-                        Icon(
-                            Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Back",
-                            tint = Color.White,
-                        )
-                    }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = topBarColor,
-                ),
-            )
+            PokemonDetailTopBar(uiState = uiState, onBack = onBack)
         },
     ) { innerPadding ->
         when (val state = uiState) {
-            is PokemonDetailUiState.Loading -> {
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(innerPadding),
-                    contentAlignment = Alignment.Center,
-                ) {
-                    CircularProgressIndicator()
-                }
-            }
+            is PokemonDetailUiState.Loading -> DetailLoadingContent(
+                modifier = Modifier.fillMaxSize().padding(innerPadding),
+            )
+            is PokemonDetailUiState.Error -> DetailErrorContent(
+                message = state.message,
+                onRetry = viewModel::retry,
+                modifier = Modifier.fillMaxSize().padding(innerPadding),
+            )
+            is PokemonDetailUiState.Success -> PokemonDetailContent(
+                pokemon = state.pokemon,
+                modifier = Modifier.fillMaxSize().padding(innerPadding),
+            )
+        }
+    }
+}
 
-            is PokemonDetailUiState.Error -> {
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(innerPadding),
-                    contentAlignment = Alignment.Center,
-                ) {
-                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        Text(
-                            text = state.message,
-                            style = MaterialTheme.typography.bodyLarge,
-                            color = MaterialTheme.colorScheme.error,
-                            textAlign = TextAlign.Center,
-                        )
-                        Spacer(modifier = Modifier.height(16.dp))
-                        Button(
-                            onClick = viewModel::retry,
-                            colors = ButtonDefaults.buttonColors(containerColor = PokemonRed),
-                        ) {
-                            Icon(Icons.Default.Refresh, contentDescription = null)
-                            Spacer(modifier = Modifier.width(8.dp))
-                            Text("Retry")
-                        }
-                    }
-                }
-            }
+// ── Private composables ──────────────────────────────────────────────────────
 
-            is PokemonDetailUiState.Success -> {
-                PokemonDetailContent(
-                    pokemon = state.pokemon,
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(innerPadding),
-                )
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun PokemonDetailTopBar(
+    uiState: PokemonDetailUiState,
+    onBack: () -> Unit,
+) {
+    val topBarColor = when (uiState) {
+        is PokemonDetailUiState.Success ->
+            pokemonTypeColors[uiState.pokemon.types.firstOrNull()] ?: PokemonRed
+        else -> PokemonRed
+    }
+    val title = when (uiState) {
+        is PokemonDetailUiState.Success ->
+            uiState.pokemon.name.replaceFirstChar { it.titlecase(Locale.ROOT) }
+        else -> "Pokémon Detail"
+    }
+    TopAppBar(
+        title = { Text(title, fontWeight = FontWeight.Bold, color = Color.White) },
+        navigationIcon = {
+            IconButton(onClick = onBack) {
+                Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back", tint = Color.White)
+            }
+        },
+        colors = TopAppBarDefaults.topAppBarColors(containerColor = topBarColor),
+    )
+}
+
+@Composable
+private fun DetailLoadingContent(modifier: Modifier = Modifier) {
+    Box(modifier = modifier, contentAlignment = Alignment.Center) {
+        CircularProgressIndicator()
+    }
+}
+
+@Composable
+private fun DetailErrorContent(
+    message: String,
+    onRetry: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Box(modifier = modifier, contentAlignment = Alignment.Center) {
+        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+            Text(
+                text = message,
+                style = MaterialTheme.typography.bodyLarge,
+                color = MaterialTheme.colorScheme.error,
+                textAlign = TextAlign.Center,
+            )
+            Spacer(modifier = Modifier.height(16.dp))
+            Button(
+                onClick = onRetry,
+                colors = ButtonDefaults.buttonColors(containerColor = PokemonRed),
+            ) {
+                Icon(Icons.Default.Refresh, contentDescription = null)
+                Spacer(modifier = Modifier.width(8.dp))
+                Text("Retry")
             }
         }
     }
@@ -183,120 +181,11 @@ private fun PokemonDetailContent(
         modifier = modifier,
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        // Hero image with rich type-color background + pokéball decoration
-        item {
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(280.dp)
-                    .background(
-                        Brush.verticalGradient(
-                            colors = listOf(
-                                primaryTypeColor.copy(alpha = 0.7f),
-                                primaryTypeColor.copy(alpha = 0.2f),
-                            ),
-                        ),
-                    ),
-                contentAlignment = Alignment.Center,
-            ) {
-                // Large pokéball decoration circle (outer ring)
-                Box(
-                    modifier = Modifier
-                        .size(260.dp)
-                        .align(Alignment.CenterEnd)
-                        .offset(x = 60.dp)
-                        .clip(CircleShape)
-                        .border(2.dp, Color.White.copy(alpha = 0.25f), CircleShape)
-                        .background(Color.White.copy(alpha = 0.08f)),
-                )
-                // Inner pokéball circle
-                Box(
-                    modifier = Modifier
-                        .size(160.dp)
-                        .align(Alignment.CenterEnd)
-                        .offset(x = 60.dp)
-                        .clip(CircleShape)
-                        .background(Color.White.copy(alpha = 0.08f)),
-                )
-                AsyncImage(
-                    model = pokemon.imageUrl,
-                    contentDescription = pokemon.name,
-                    modifier = Modifier.size(220.dp),
-                    contentScale = ContentScale.Fit,
-                )
-            }
-        }
-
-        // ID and name
-        item {
-            Text(
-                text = "#${pokemon.id.toString().padStart(3, '0')}",
-                style = MaterialTheme.typography.titleMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-            Spacer(modifier = Modifier.height(4.dp))
-            Text(
-                text = pokemon.name.replaceFirstChar { it.titlecase(Locale.ROOT) },
-                style = MaterialTheme.typography.headlineLarge,
-                fontWeight = FontWeight.Bold,
-            )
-            Spacer(modifier = Modifier.height(12.dp))
-        }
-
-        // Type chips
-        item {
-            FlowRow(
-                horizontalArrangement = Arrangement.spacedBy(
-                    8.dp,
-                    Alignment.CenterHorizontally,
-                ),
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp),
-            ) {
-                pokemon.types.forEach { type ->
-                    PokemonTypeLabel(typeName = type)
-                }
-            }
-            Spacer(modifier = Modifier.height(24.dp))
-        }
-
-        // Basic info cards
-        item {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp),
-                horizontalArrangement = Arrangement.spacedBy(12.dp),
-            ) {
-                InfoCard(
-                    title = "Height",
-                    value = "${pokemon.height / 10.0} m",
-                    typeColor = primaryTypeColor,
-                    modifier = Modifier.weight(1f),
-                )
-                InfoCard(
-                    title = "Weight",
-                    value = "${pokemon.weight / 10.0} kg",
-                    typeColor = primaryTypeColor,
-                    modifier = Modifier.weight(1f),
-                )
-                InfoCard(
-                    title = "ID",
-                    value = "#${pokemon.id}",
-                    typeColor = primaryTypeColor,
-                    modifier = Modifier.weight(1f),
-                )
-            }
-            Spacer(modifier = Modifier.height(24.dp))
-        }
-
-        // Stats section header
-        item {
-            SectionHeader(title = "Base Stats", typeColor = primaryTypeColor)
-            Spacer(modifier = Modifier.height(12.dp))
-        }
-
+        item { PokemonHeroImage(pokemon = pokemon, primaryTypeColor = primaryTypeColor) }
+        item { PokemonNameHeader(pokemon = pokemon) }
+        item { PokemonTypeRow(types = pokemon.types) }
+        item { PokemonInfoCards(pokemon = pokemon, primaryTypeColor = primaryTypeColor) }
+        item { SectionHeader(title = "Base Stats", typeColor = primaryTypeColor) }
         items(pokemon.stats) { stat ->
             AnimatedVisibility(
                 visible = animateStats,
@@ -310,50 +199,141 @@ private fun PokemonDetailContent(
                 )
             }
         }
-
-        // Abilities section header
         item {
             Spacer(modifier = Modifier.height(24.dp))
             SectionHeader(title = "Abilities", typeColor = primaryTypeColor)
             Spacer(modifier = Modifier.height(8.dp))
         }
-
         items(pokemon.abilities) { ability ->
-            Card(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp, vertical = 4.dp),
-                shape = RoundedCornerShape(12.dp),
-                colors = CardDefaults.cardColors(
-                    containerColor = primaryTypeColor.copy(alpha = 0.1f),
+            AbilityCard(
+                name = ability.name,
+                isHidden = ability.isHidden,
+                primaryTypeColor = primaryTypeColor,
+            )
+        }
+        item { Spacer(modifier = Modifier.height(32.dp)) }
+    }
+}
+
+@Composable
+private fun PokemonHeroImage(
+    pokemon: PokemonDetail,
+    primaryTypeColor: Color,
+) {
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(280.dp)
+            .background(
+                Brush.verticalGradient(
+                    colors = listOf(
+                        primaryTypeColor.copy(alpha = 0.7f),
+                        primaryTypeColor.copy(alpha = 0.2f),
+                    ),
                 ),
-            ) {
-                Row(
-                    modifier = Modifier.padding(16.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    Text(
-                        text = ability.name
-                            .replace("-", " ")
-                            .replaceFirstChar { it.titlecase(Locale.ROOT) },
-                        style = MaterialTheme.typography.bodyLarge,
-                        fontWeight = FontWeight.Medium,
-                        modifier = Modifier.weight(1f),
-                    )
-                    if (ability.isHidden) {
-                        Text(
-                            text = "Hidden",
-                            style = MaterialTheme.typography.labelSmall,
-                            color = primaryTypeColor,
-                            fontWeight = FontWeight.Bold,
-                        )
-                    }
-                }
+            ),
+        contentAlignment = Alignment.Center,
+    ) {
+        Box(
+            modifier = Modifier
+                .size(260.dp)
+                .align(Alignment.CenterEnd)
+                .offset(x = 60.dp)
+                .clip(CircleShape)
+                .border(2.dp, Color.White.copy(alpha = 0.25f), CircleShape)
+                .background(Color.White.copy(alpha = 0.08f)),
+        )
+        Box(
+            modifier = Modifier
+                .size(160.dp)
+                .align(Alignment.CenterEnd)
+                .offset(x = 60.dp)
+                .clip(CircleShape)
+                .background(Color.White.copy(alpha = 0.08f)),
+        )
+        AsyncImage(
+            model = pokemon.imageUrl,
+            contentDescription = pokemon.name,
+            modifier = Modifier.size(220.dp),
+            contentScale = ContentScale.Fit,
+        )
+    }
+}
+
+@Composable
+private fun PokemonNameHeader(pokemon: PokemonDetail) {
+    Text(
+        text = "#${pokemon.id.toString().padStart(3, '0')}",
+        style = MaterialTheme.typography.titleMedium,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+    )
+    Spacer(modifier = Modifier.height(4.dp))
+    Text(
+        text = pokemon.name.replaceFirstChar { it.titlecase(Locale.ROOT) },
+        style = MaterialTheme.typography.headlineLarge,
+        fontWeight = FontWeight.Bold,
+    )
+    Spacer(modifier = Modifier.height(12.dp))
+}
+
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+private fun PokemonTypeRow(types: List<String>) {
+    FlowRow(
+        horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterHorizontally),
+        modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
+    ) {
+        types.forEach { type -> PokemonTypeLabel(typeName = type) }
+    }
+    Spacer(modifier = Modifier.height(24.dp))
+}
+
+@Composable
+private fun PokemonInfoCards(
+    pokemon: PokemonDetail,
+    primaryTypeColor: Color,
+) {
+    Row(
+        modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
+        horizontalArrangement = Arrangement.spacedBy(12.dp),
+    ) {
+        InfoCard(title = "Height", value = "${pokemon.height / 10.0} m", typeColor = primaryTypeColor, modifier = Modifier.weight(1f))
+        InfoCard(title = "Weight", value = "${pokemon.weight / 10.0} kg", typeColor = primaryTypeColor, modifier = Modifier.weight(1f))
+        InfoCard(title = "ID", value = "#${pokemon.id}", typeColor = primaryTypeColor, modifier = Modifier.weight(1f))
+    }
+    Spacer(modifier = Modifier.height(24.dp))
+}
+
+@Composable
+private fun AbilityCard(
+    name: String,
+    isHidden: Boolean,
+    primaryTypeColor: Color,
+) {
+    Card(
+        modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 4.dp),
+        shape = RoundedCornerShape(12.dp),
+        colors = CardDefaults.cardColors(containerColor = primaryTypeColor.copy(alpha = 0.1f)),
+    ) {
+        Row(
+            modifier = Modifier.padding(16.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Text(
+                text = name.replace("-", " ").replaceFirstChar { it.titlecase(Locale.ROOT) },
+                style = MaterialTheme.typography.bodyLarge,
+                fontWeight = FontWeight.Medium,
+                modifier = Modifier.weight(1f),
+            )
+            if (isHidden) {
+                Text(
+                    text = "Hidden",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = primaryTypeColor,
+                    fontWeight = FontWeight.Bold,
+                )
             }
         }
-
-        // Bottom spacing
-        item { Spacer(modifier = Modifier.height(32.dp)) }
     }
 }
 
@@ -364,9 +344,7 @@ private fun SectionHeader(
     modifier: Modifier = Modifier,
 ) {
     Row(
-        modifier = modifier
-            .fillMaxWidth()
-            .padding(horizontal = 16.dp),
+        modifier = modifier.fillMaxWidth().padding(horizontal = 16.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Box(
@@ -395,14 +373,10 @@ private fun InfoCard(
     Card(
         modifier = modifier,
         shape = RoundedCornerShape(12.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = typeColor.copy(alpha = 0.12f),
-        ),
+        colors = CardDefaults.cardColors(containerColor = typeColor.copy(alpha = 0.12f)),
     ) {
         Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
+            modifier = Modifier.fillMaxWidth().padding(16.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
             Text(
@@ -434,7 +408,6 @@ private fun StatBar(
         animationSpec = tween(durationMillis = 1000),
         label = "stat_progress",
     )
-
     val statColor = when {
         stat.baseStat >= 150 -> Color(0xFF4CAF50)
         stat.baseStat >= 100 -> Color(0xFF8BC34A)
@@ -442,7 +415,6 @@ private fun StatBar(
         stat.baseStat >= 50 -> Color(0xFFFF9800)
         else -> Color(0xFFF44336)
     }
-
     val statLabel = when (stat.name) {
         "hp" -> "HP"
         "attack" -> "ATK"
@@ -452,7 +424,6 @@ private fun StatBar(
         "speed" -> "SPD"
         else -> stat.name.uppercase(Locale.ROOT)
     }
-
     Row(
         modifier = modifier.fillMaxWidth(),
         verticalAlignment = Alignment.CenterVertically,
