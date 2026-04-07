@@ -13,6 +13,18 @@ import io.ktor.client.request.put
 import io.ktor.client.request.setBody
 import io.ktor.util.reflect.TypeInfo
 
+/**
+ * [ApiService] 的 Ktor 實作。
+ *
+ * 每個方法在發送請求前先檢查 [ConnectivityObserver.isConnected]，
+ * 有連線才透過 [safeApiCall] 執行實際請求，統一將例外轉換為 [NetworkResult.Error]。
+ *
+ * `@Suppress("UNCHECKED_CAST")` 來自 Ktor 的 `body(typeInfo)` 回傳 `Any`，
+ * 但型別安全由 [TypeInfo] 在執行期保證，強制轉型不會造成實際風險。
+ *
+ * @param httpClient 已設定 Auth、Logging、ContentNegotiation 插件的 Ktor HttpClient
+ * @param connectivityObserver 用於在無網路時提前短路，避免不必要的請求
+ */
 class KtorApiService(
     private val httpClient: HttpClient,
     private val connectivityObserver: ConnectivityObserver,
