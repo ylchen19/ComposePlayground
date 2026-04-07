@@ -4,7 +4,6 @@ import androidx.paging.PagingSource
 import androidx.paging.PagingState
 import com.example.composeplayground.data.model.Pokemon
 import com.example.composeplayground.data.repository.PokemonRepository
-import com.example.composeplayground.data.repository.PokemonRepositoryImpl
 
 class TypeFilteredPagingSource(
     private val repository: PokemonRepository,
@@ -12,23 +11,15 @@ class TypeFilteredPagingSource(
     private val searchQuery: String = "",
 ) : PagingSource<Int, Pokemon>() {
 
+    // 同類型的全部 Pokemon 只在第一頁載入一次，後續頁直接從快取取
     private var cachedList: List<Pokemon>? = null
 
     override suspend fun load(params: LoadParams<Int>): LoadResult<Int, Pokemon> {
         val offset = params.key ?: 0
         return try {
-            val allPokemon = cachedList ?: run {
-                val response = repository.fetchPokemonByType(typeName)
-                response.pokemon.map { entry ->
-                    val id = PokemonRepositoryImpl.extractIdFromUrl(entry.pokemon.url)
-                    Pokemon(
-                        id = id,
-                        name = entry.pokemon.name,
-                        imageUrl = PokemonRepositoryImpl.spriteUrl(id),
-                        types = listOf(typeName),
-                    )
-                }.sortedBy { it.id }.also { cachedList = it }
-            }
+            // repository.fetchPokemonByType 已完成 DTO → domain 映射並排序
+            val allPokemon = cachedList
+                ?: repository.fetchPokemonByType(typeName).also { cachedList = it }
 
             val filtered = if (searchQuery.isBlank()) allPokemon
                 else allPokemon.filter { it.name.contains(searchQuery, ignoreCase = true) }
@@ -37,11 +28,7 @@ class TypeFilteredPagingSource(
             val nextOffset = if (offset + params.loadSize < filtered.size) offset + params.loadSize else null
             val prevOffset = if (offset > 0) maxOf(0, offset - params.loadSize) else null
 
-            LoadResult.Page(
-                data = pageData,
-                prevKey = prevOffset,
-                nextKey = nextOffset,
-            )
+            LoadResult.Page(data = pageData, prevKey = prevOffset, nextKey = nextOffset)
         } catch (e: Exception) {
             LoadResult.Error(e)
         }

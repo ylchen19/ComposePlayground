@@ -18,7 +18,9 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
 
 enum class ViewMode { Grid, List }
@@ -37,12 +39,10 @@ class PokemonListViewModel(
     private val _uiState = MutableStateFlow(PokemonListUiState())
     val uiState: StateFlow<PokemonListUiState> = _uiState.asStateFlow()
 
-    private val searchQueryFlow = MutableStateFlow("")
-    private val selectedTypeFlow = MutableStateFlow<String?>(null)
-
+    // 搜尋加 debounce、型別切換即時生效，兩者皆直接從 _uiState 衍生，消除重複 source of truth
     val pokemonPagingFlow: Flow<PagingData<Pokemon>> = combine(
-        searchQueryFlow.debounce(300),
-        selectedTypeFlow,
+        _uiState.map { it.searchQuery }.distinctUntilChanged().debounce(300),
+        _uiState.map { it.selectedType }.distinctUntilChanged(),
     ) { query, type ->
         query to type
     }.flatMapLatest { (query, type) ->
@@ -76,11 +76,9 @@ class PokemonListViewModel(
 
     fun updateSearchQuery(query: String) {
         _uiState.update { it.copy(searchQuery = query) }
-        searchQueryFlow.value = query
     }
 
     fun selectType(type: String?) {
         _uiState.update { it.copy(selectedType = type) }
-        selectedTypeFlow.value = type
     }
 }

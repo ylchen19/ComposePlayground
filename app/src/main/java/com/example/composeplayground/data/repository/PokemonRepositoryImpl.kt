@@ -10,11 +10,18 @@ class PokemonRepositoryImpl(
     private val httpClient: HttpClient,
 ) : PokemonRepository {
 
-    override suspend fun fetchPokemonList(offset: Int, limit: Int): PokemonListResponse {
-        return httpClient.get("pokemon") {
+    override suspend fun fetchPokemonList(offset: Int, limit: Int): PokemonPage {
+        val response: PokemonListResponse = httpClient.get("pokemon") {
             parameter("offset", offset)
             parameter("limit", limit)
         }.body()
+        return PokemonPage(
+            pokemon = response.results.map { item ->
+                val id = extractIdFromUrl(item.url)
+                Pokemon(id = id, name = item.name, imageUrl = spriteUrl(id), types = emptyList())
+            },
+            hasNext = response.next != null,
+        )
     }
 
     override suspend fun fetchPokemonDetail(id: Int): PokemonDetail {
@@ -22,8 +29,12 @@ class PokemonRepositoryImpl(
         return response.toDomain()
     }
 
-    override suspend fun fetchPokemonByType(typeName: String): PokemonTypeResponse {
-        return httpClient.get("type/$typeName").body()
+    override suspend fun fetchPokemonByType(typeName: String): List<Pokemon> {
+        val response: PokemonTypeResponse = httpClient.get("type/$typeName").body()
+        return response.pokemon.map { entry ->
+            val id = extractIdFromUrl(entry.pokemon.url)
+            Pokemon(id = id, name = entry.pokemon.name, imageUrl = spriteUrl(id), types = listOf(typeName))
+        }.sortedBy { it.id }
     }
 
     override suspend fun fetchAllPokemonNames(): List<Pokemon> {
@@ -33,12 +44,7 @@ class PokemonRepositoryImpl(
         }.body()
         return response.results.map { item ->
             val id = extractIdFromUrl(item.url)
-            Pokemon(
-                id = id,
-                name = item.name,
-                imageUrl = spriteUrl(id),
-                types = emptyList(),
-            )
+            Pokemon(id = id, name = item.name, imageUrl = spriteUrl(id), types = emptyList())
         }
     }
 
@@ -62,9 +68,8 @@ class PokemonRepositoryImpl(
     }
 
     companion object {
-        fun extractIdFromUrl(url: String): Int {
-            return url.trimEnd('/').substringAfterLast('/').toInt()
-        }
+        fun extractIdFromUrl(url: String): Int =
+            url.trimEnd('/').substringAfterLast('/').toInt()
 
         fun spriteUrl(id: Int): String =
             "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/$id.png"
