@@ -1,20 +1,19 @@
 package com.example.composeplayground.data.repository
 
 import com.example.composeplayground.data.model.*
-import io.ktor.client.HttpClient
-import io.ktor.client.call.body
-import io.ktor.client.request.get
-import io.ktor.client.request.parameter
+import com.example.composeplayground.network.NetworkResult
+import com.example.composeplayground.network.api.ApiService
+import com.example.composeplayground.network.api.get
 
 class PokemonRepositoryImpl(
-    private val httpClient: HttpClient,
+    private val apiService: ApiService,
 ) : PokemonRepository {
 
     override suspend fun fetchPokemonList(offset: Int, limit: Int): PokemonPage {
-        val response: PokemonListResponse = httpClient.get("pokemon") {
-            parameter("offset", offset)
-            parameter("limit", limit)
-        }.body()
+        val response = apiService.get<PokemonListResponse>(
+            endpoint = "pokemon",
+            queryParams = mapOf("offset" to "$offset", "limit" to "$limit"),
+        ).getOrThrow()
         return PokemonPage(
             pokemon = response.results.map { item ->
                 val id = extractIdFromUrl(item.url)
@@ -25,12 +24,12 @@ class PokemonRepositoryImpl(
     }
 
     override suspend fun fetchPokemonDetail(id: Int): PokemonDetail {
-        val response: PokemonDetailResponse = httpClient.get("pokemon/$id").body()
+        val response = apiService.get<PokemonDetailResponse>("pokemon/$id").getOrThrow()
         return response.toDomain()
     }
 
     override suspend fun fetchPokemonByType(typeName: String): List<Pokemon> {
-        val response: PokemonTypeResponse = httpClient.get("type/$typeName").body()
+        val response = apiService.get<PokemonTypeResponse>("type/$typeName").getOrThrow()
         return response.pokemon.map { entry ->
             val id = extractIdFromUrl(entry.pokemon.url)
             Pokemon(id = id, name = entry.pokemon.name, imageUrl = spriteUrl(id), types = listOf(typeName))
@@ -38,10 +37,10 @@ class PokemonRepositoryImpl(
     }
 
     override suspend fun fetchAllPokemonNames(): List<Pokemon> {
-        val response: PokemonListResponse = httpClient.get("pokemon") {
-            parameter("limit", 100000)
-            parameter("offset", 0)
-        }.body()
+        val response = apiService.get<PokemonListResponse>(
+            endpoint = "pokemon",
+            queryParams = mapOf("limit" to "100000", "offset" to "0"),
+        ).getOrThrow()
         return response.results.map { item ->
             val id = extractIdFromUrl(item.url)
             Pokemon(id = id, name = item.name, imageUrl = spriteUrl(id), types = emptyList())
@@ -77,4 +76,14 @@ class PokemonRepositoryImpl(
         fun artworkUrl(id: Int): String =
             "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/$id.png"
     }
+}
+
+/**
+ * [NetworkResult] 的解包輔助函式，成功時回傳資料，失敗時拋出例外由 PagingSource 統一捕捉。
+ * 定義為檔案私有，不對外暴露，僅限本 Repository 使用。
+ */
+private fun <T> NetworkResult<T>.getOrThrow(): T = when (this) {
+    is NetworkResult.Success -> data
+    is NetworkResult.Error -> throw Exception(message ?: "Network error (code=$code)")
+    is NetworkResult.Loading -> error("Unexpected Loading state in repository")
 }

@@ -50,13 +50,14 @@ class HttpClientFactory(
                 preconfigured = okHttpClient
             }
 
-            // JSON 反序列化設定：忽略多餘欄位、允許寬鬆格式、序列化預設值
+            // JSON 反序列化設定：忽略多餘欄位、允許寬鬆格式、型別不符時退回預設值
             install(ContentNegotiation) {
                 json(Json {
                     ignoreUnknownKeys = true
                     isLenient = true
                     prettyPrint = false
                     encodeDefaults = true
+                    coerceInputValues = true  // 欄位型別不符時使用預設值而非拋出例外（PokéAPI 部分欄位可能為 null）
                 })
             }
 

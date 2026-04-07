@@ -19,7 +19,8 @@ import org.koin.dsl.module
 import java.io.File
 
 /**
- * 通用網路層的 Koin 模組，提供具備認證與快取能力的 [HttpClient] 與 [ApiService]。
+ * 網路層的 Koin 模組，提供具備快取能力的 [HttpClient] 與 [ApiService]，
+ * 目前指向 PokéAPI（公開 API，無需 Bearer Token）。
  *
  * ## 依賴圖
  * ```
@@ -28,12 +29,14 @@ import java.io.File
  * bareClient (named)  →  TokenProvider  →  HttpClientFactory  →  HttpClient
  *                                                                      ↓
  * ConnectivityObserver  ─────────────────────────────────────→  ApiService (KtorApiService)
+ *                                                                      ↑
+ *                                                              pokemonModule 使用此 ApiService
  * ```
  *
  * ## 使用說明
- * - `baseUrl` / `refreshUrl` 預設為範例值，**正式串接時請在此覆寫**
- * - `bareClient` 為不含 Auth 插件的裸客戶端，僅供 [InMemoryTokenProvider] 刷新 Token 使用，
- *   避免 Auth 插件觸發遞迴刷新
+ * - [ApiService] 由 [pokemonModule] 的 [com.example.composeplayground.data.repository.PokemonRepositoryImpl] 注入使用
+ * - PokéAPI 為公開 API，[TokenProvider] 的 Token 永遠為 null，Auth 插件不會附加任何 Authorization header
+ * - `bareClient` 為不含 Auth 插件的裸客戶端，供日後有認證需求的 API 刷新 Token 使用
  * - 快取目錄設為 `context.cacheDir/http_cache`，由 Android 在儲存空間不足時自動清理
  */
 val networkModule = module {
@@ -72,7 +75,8 @@ val networkModule = module {
     // ── API 服務 ──────────────────────────────────────────────────────────────
     single<ApiService> { KtorApiService(get(), get()) }
 
-    // ── URL 設定（正式串接時請覆寫以下兩個 named 綁定）─────────────────────────
-    single(named("baseUrl")) { "https://api.example.com/" }
-    single(named("refreshUrl")) { "https://api.example.com/auth/refresh" }
+    // ── URL 設定 ──────────────────────────────────────────────────────────────
+    single(named("baseUrl")) { "https://pokeapi.co/api/v2/" }
+    // PokéAPI 無需 Token 刷新；refreshUrl 保留作為未來串接需認證 API 時的擴充點
+    single(named("refreshUrl")) { "" }
 }
