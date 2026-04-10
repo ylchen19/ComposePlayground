@@ -39,11 +39,13 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.composeplayground.ui.screen.pokemon.components.PokemonGridCard
 import com.example.composeplayground.ui.screen.pokemon.components.ShimmerGridCard
+import com.example.composeplayground.ui.screen.pokemon.components.UniformHeightLazyRow
 import com.example.composeplayground.ui.screen.pokemon.components.pokemonTypeColors
 import com.example.composeplayground.ui.theme.PokemonRed
 import com.example.composeplayground.ui.theme.PokemonYellow
@@ -111,6 +113,18 @@ private fun PokemonTypeSectionRow(
 ) {
     val typeColor = pokemonTypeColors[section.typeName] ?: Color.Gray
 
+    // 卡片寬度隨系統字體縮放等比放大，上限 2×
+    val fontScale = LocalDensity.current.fontScale
+    val cardWidth = (140 * fontScale.coerceAtMost(2f)).dp
+    val textAreaWidth = cardWidth - 24.dp // Card 內 padding 12dp × 2
+    val nameStyle = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Bold)
+
+    // 取名稱最長的寶可夢名稱作為 probe（O(1) 比較）
+    val longestName = remember(section.pokemon) {
+        section.pokemon.maxByOrNull { it.name.length }
+            ?.name?.replaceFirstChar { c -> c.titlecase() } ?: ""
+    }
+
     Column(modifier = modifier.fillMaxWidth()) {
         // ── 屬性標題列 ─────────────────────────────────────────────────────────
         Row(
@@ -150,7 +164,7 @@ private fun PokemonTypeSectionRow(
                 horizontalArrangement = Arrangement.spacedBy(10.dp),
             ) {
                 items(4) {
-                    ShimmerGridCard(modifier = Modifier.width(140.dp))
+                    ShimmerGridCard(modifier = Modifier.width(cardWidth))
                 }
             }
         } else if (section.pokemon.isEmpty()) {
@@ -188,35 +202,42 @@ private fun PokemonTypeSectionRow(
                 }
             }
 
-            LazyRow(
-                state = listState,
-                contentPadding = PaddingValues(horizontal = 16.dp),
-                horizontalArrangement = Arrangement.spacedBy(10.dp),
-            ) {
-                items(
-                    count = minOf(visibleCount, section.pokemon.size),
-                    key = { index -> section.pokemon[index].id },
-                ) { index ->
-                    PokemonGridCard(
-                        pokemon = section.pokemon[index],
-                        onClick = { onNavigateToDetail(section.pokemon[index].id) },
-                        modifier = Modifier.width(140.dp),
-                    )
-                }
-                // 尾端載入指示器
-                if (visibleCount < section.pokemon.size) {
-                    item(key = "loader_${section.typeName}") {
-                        Box(
-                            modifier = Modifier
-                                .width(80.dp)
-                                .height(180.dp),
-                            contentAlignment = Alignment.Center,
-                        ) {
-                            CircularProgressIndicator(
-                                modifier = Modifier.size(28.dp),
-                                color = typeColor,
-                                strokeWidth = 2.dp,
-                            )
+            UniformHeightLazyRow(
+                probeText = longestName,
+                probeStyle = nameStyle,
+                probeMaxWidth = textAreaWidth,
+            ) { minTextHeight ->
+                LazyRow(
+                    state = listState,
+                    contentPadding = PaddingValues(horizontal = 16.dp),
+                    horizontalArrangement = Arrangement.spacedBy(10.dp),
+                ) {
+                    items(
+                        count = minOf(visibleCount, section.pokemon.size),
+                        key = { index -> section.pokemon[index].id },
+                    ) { index ->
+                        PokemonGridCard(
+                            pokemon = section.pokemon[index],
+                            onClick = { onNavigateToDetail(section.pokemon[index].id) },
+                            modifier = Modifier.width(cardWidth),
+                            minTextHeight = minTextHeight,
+                        )
+                    }
+                    // 尾端載入指示器
+                    if (visibleCount < section.pokemon.size) {
+                        item(key = "loader_${section.typeName}") {
+                            Box(
+                                modifier = Modifier
+                                    .width(80.dp)
+                                    .height(180.dp),
+                                contentAlignment = Alignment.Center,
+                            ) {
+                                CircularProgressIndicator(
+                                    modifier = Modifier.size(28.dp),
+                                    color = typeColor,
+                                    strokeWidth = 2.dp,
+                                )
+                            }
                         }
                     }
                 }

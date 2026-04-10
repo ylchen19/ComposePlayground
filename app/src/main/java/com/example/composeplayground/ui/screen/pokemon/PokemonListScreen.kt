@@ -49,18 +49,18 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import com.example.composeplayground.ui.theme.PokemonRed
-import com.example.composeplayground.ui.theme.PokemonYellow
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.paging.LoadState
-import androidx.paging.compose.collectAsLazyPagingItems
 import androidx.paging.compose.LazyPagingItems
+import androidx.paging.compose.collectAsLazyPagingItems
 import com.example.composeplayground.data.model.Pokemon
 import com.example.composeplayground.ui.screen.pokemon.components.PokemonGridCard
 import com.example.composeplayground.ui.screen.pokemon.components.PokemonListItem
 import com.example.composeplayground.ui.screen.pokemon.components.PokemonTypeFilterChip
 import com.example.composeplayground.ui.screen.pokemon.components.ShimmerGridCard
 import com.example.composeplayground.ui.screen.pokemon.components.ShimmerListItem
+import com.example.composeplayground.ui.theme.PokemonRed
+import com.example.composeplayground.ui.theme.PokemonYellow
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable

@@ -8,7 +8,9 @@ import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -22,7 +24,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import com.example.composeplayground.data.model.Pokemon
@@ -34,6 +36,7 @@ fun PokemonGridCard(
     pokemon: Pokemon,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
+    minTextHeight: Dp = Dp.Unspecified,
 ) {
     val primaryTypeColor = pokemonTypeColors[pokemon.types.firstOrNull()] ?: Color.Gray
 
@@ -90,12 +93,18 @@ fun PokemonGridCard(
                 text = pokemon.name.replaceFirstChar { it.titlecase(Locale.ROOT) },
                 style = MaterialTheme.typography.titleSmall,
                 fontWeight = FontWeight.Bold,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
                 textAlign = TextAlign.Center,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(top = 6.dp),
+                    .padding(top = 6.dp)
+                    .then(
+                        if (minTextHeight != Dp.Unspecified) {
+                            Modifier.heightIn(min = minTextHeight)
+                        } else {
+                            Modifier
+                        },
+                    )
+                    .wrapContentHeight(align = Alignment.CenterVertically),
             )
 
             // Type labels
