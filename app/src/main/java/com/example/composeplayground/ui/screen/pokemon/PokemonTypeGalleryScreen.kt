@@ -215,6 +215,9 @@ private fun PokemonTypeSectionRow(
                     items(
                         count = minOf(visibleCount, section.pokemon.size),
                         key = { index -> section.pokemon[index].id },
+                        // Gap 2: explicit contentType lets Compose recycle slots only among
+                        // structurally identical composables (cards with cards, loader with loader).
+                        contentType = { "pokemon_card" },
                     ) { index ->
                         PokemonGridCard(
                             pokemon = section.pokemon[index],
@@ -225,7 +228,7 @@ private fun PokemonTypeSectionRow(
                     }
                     // 尾端載入指示器
                     if (visibleCount < section.pokemon.size) {
-                        item(key = "loader_${section.typeName}") {
+                        item(key = "loader_${section.typeName}", contentType = "loader") {
                             Box(
                                 modifier = Modifier
                                     .width(80.dp)

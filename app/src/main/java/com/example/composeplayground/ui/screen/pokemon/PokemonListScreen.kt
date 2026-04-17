@@ -18,14 +18,19 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.LazyGridState
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.List
 import androidx.compose.material.icons.filled.Category
 import androidx.compose.material.icons.filled.Clear
+import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Settings
@@ -33,6 +38,7 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -43,16 +49,23 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.paging.LoadState
 import androidx.paging.compose.LazyPagingItems
 import androidx.paging.compose.collectAsLazyPagingItems
+import coil.imageLoader
+import coil.request.ImageRequest
 import com.example.composeplayground.data.model.Pokemon
 import com.example.composeplayground.ui.screen.pokemon.components.PokemonGridCard
 import com.example.composeplayground.ui.screen.pokemon.components.PokemonListItem
@@ -61,6 +74,7 @@ import com.example.composeplayground.ui.screen.pokemon.components.ShimmerGridCar
 import com.example.composeplayground.ui.screen.pokemon.components.ShimmerListItem
 import com.example.composeplayground.ui.theme.PokemonRed
 import com.example.composeplayground.ui.theme.PokemonYellow
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -74,6 +88,24 @@ fun PokemonListScreen(
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val pagingItems = viewModel.pokemonPagingFlow.collectAsLazyPagingItems()
 
+    // Gap 4: Hoist scroll states above AnimatedContent so they survive view-mode transitions.
+    val gridState = rememberLazyGridState()
+    val listState = rememberLazyListState()
+    val coroutineScope = rememberCoroutineScope()
+
+    // Gap 4: derivedStateOf — only notifies observers when the boolean result flips (true↔false),
+    // NOT on every scroll pixel. Without this wrapper, reading firstVisibleItemIndex directly in
+    // the composable body would trigger recomposition at 60–120 fps during scrolling.
+    val showScrollToTop by remember {
+        derivedStateOf {
+            if (uiState.viewMode == ViewMode.Grid) {
+                gridState.firstVisibleItemIndex > 0
+            } else {
+                listState.firstVisibleItemIndex > 0
+            }
+        }
+    }
+
     Scaffold(
         modifier = modifier,
         topBar = {
@@ -83,6 +115,28 @@ fun PokemonListScreen(
                 onNavigateToSettings = onNavigateToSettings,
                 onNavigateToTypeGallery = onNavigateToTypeGallery,
             )
+        },
+        floatingActionButton = {
+            if (showScrollToTop) {
+                FloatingActionButton(
+                    onClick = {
+                        coroutineScope.launch {
+                            if (uiState.viewMode == ViewMode.Grid) {
+                                gridState.animateScrollToItem(0)
+                            } else {
+                                listState.animateScrollToItem(0)
+                            }
+                        }
+                    },
+                    containerColor = PokemonRed,
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.KeyboardArrowUp,
+                        contentDescription = "Scroll to top",
+                        tint = Color.White,
+                    )
+                }
+            }
         },
     ) { innerPadding ->
         Column(
@@ -104,6 +158,8 @@ fun PokemonListScreen(
                 viewMode = uiState.viewMode,
                 pagingItems = pagingItems,
                 onNavigateToDetail = onNavigateToDetail,
+                gridState = gridState,
+                listState = listState,
             )
         }
     }
@@ -189,14 +245,20 @@ private fun PokemonTypeFilterRow(
         contentPadding = PaddingValues(horizontal = 16.dp),
         horizontalArrangement = Arrangement.spacedBy(8.dp),
     ) {
-        item {
+        // Gap 2: key ensures stable identity for the "All" chip across recompositions.
+        // contentType groups structurally identical composables for slot recycling.
+        item(key = "all", contentType = "filter_chip") {
             PokemonTypeFilterChip(
                 typeName = "All",
                 isSelected = selectedType == null,
                 onClick = { onSelectType(null) },
             )
         }
-        items(availableTypes) { type ->
+        items(
+            items = availableTypes,
+            key = { type -> type },
+            contentType = { "filter_chip" },
+        ) { type ->
             PokemonTypeFilterChip(
                 typeName = type,
                 isSelected = selectedType == type,
@@ -211,6 +273,10 @@ private fun PokemonPagingContent(
     viewMode: ViewMode,
     pagingItems: LazyPagingItems<Pokemon>,
     onNavigateToDetail: (Int) -> Unit,
+    // Gap 4: states are hoisted here (above AnimatedContent) so scroll position
+    // is preserved when toggling between Grid and List modes.
+    gridState: LazyGridState,
+    listState: LazyListState,
 ) {
     AnimatedContent(
         targetState = viewMode,
@@ -226,8 +292,8 @@ private fun PokemonPagingContent(
                     onRetry = pagingItems::retry,
                 )
             }
-            mode == ViewMode.Grid -> PokemonGrid(pagingItems, onNavigateToDetail)
-            else -> PokemonList(pagingItems, onNavigateToDetail)
+            mode == ViewMode.Grid -> PokemonGrid(pagingItems, onNavigateToDetail, gridState)
+            else -> PokemonList(pagingItems, onNavigateToDetail, listState)
         }
     }
 }
@@ -285,9 +351,30 @@ private fun PokemonErrorContent(
 private fun PokemonGrid(
     pagingItems: LazyPagingItems<Pokemon>,
     onNavigateToDetail: (Int) -> Unit,
+    // Gap 4: receive hoisted state instead of creating internally
+    state: LazyGridState,
 ) {
+    val context = LocalContext.current
+
+    // Gap 3: Coil image preloading — fires when itemCount grows (new page appended).
+    // Paging's prefetchDistance = 10 fetches JSON data early, but images are only
+    // requested by AsyncImage when the item enters the composition (scrolls into view).
+    // Preloading here fires ImageLoader.enqueue() for the newest page's sprites so
+    // they are already in Coil's memory/disk cache by the time the cards appear.
+    // peek(i) reads the snapshot without triggering Paging's access tracking.
+    LaunchedEffect(pagingItems.itemCount) {
+        val from = (pagingItems.itemCount - 20).coerceAtLeast(0)
+        for (i in from until pagingItems.itemCount) {
+            val url = pagingItems.peek(i)?.imageUrl ?: continue
+            context.imageLoader.enqueue(
+                ImageRequest.Builder(context).data(url).build()
+            )
+        }
+    }
+
     LazyVerticalGrid(
         columns = GridCells.Adaptive(minSize = 150.dp),
+        state = state,
         contentPadding = PaddingValues(16.dp),
         horizontalArrangement = Arrangement.spacedBy(12.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),
@@ -307,8 +394,12 @@ private fun PokemonGrid(
                 )
             }
         }
+        // Gap 2: separate contentType for the loader item — structurally different
+        // from PokemonGridCard, so Compose must not recycle their SlotTable slots
+        // interchangeably. Without this, Compose may hand a card's slot to the
+        // CircularProgressIndicator, causing a full structural re-composition.
         if (pagingItems.loadState.append is LoadState.Loading) {
-            item {
+            item(contentType = "loader") {
                 Box(
                     modifier = Modifier.fillMaxWidth().padding(16.dp),
                     contentAlignment = Alignment.Center,
@@ -322,8 +413,24 @@ private fun PokemonGrid(
 private fun PokemonList(
     pagingItems: LazyPagingItems<Pokemon>,
     onNavigateToDetail: (Int) -> Unit,
+    // Gap 4: receive hoisted state instead of creating internally
+    state: LazyListState,
 ) {
+    val context = LocalContext.current
+
+    // Gap 3: same preloading strategy as PokemonGrid (see comment above)
+    LaunchedEffect(pagingItems.itemCount) {
+        val from = (pagingItems.itemCount - 20).coerceAtLeast(0)
+        for (i in from until pagingItems.itemCount) {
+            val url = pagingItems.peek(i)?.imageUrl ?: continue
+            context.imageLoader.enqueue(
+                ImageRequest.Builder(context).data(url).build()
+            )
+        }
+    }
+
     LazyColumn(
+        state = state,
         contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
         verticalArrangement = Arrangement.spacedBy(8.dp),
         modifier = Modifier.fillMaxSize(),
@@ -342,8 +449,9 @@ private fun PokemonList(
                 )
             }
         }
+        // Gap 2: separate contentType for loader (same reason as PokemonGrid above)
         if (pagingItems.loadState.append is LoadState.Loading) {
-            item {
+            item(contentType = "loader") {
                 Box(
                     modifier = Modifier.fillMaxWidth().padding(16.dp),
                     contentAlignment = Alignment.Center,

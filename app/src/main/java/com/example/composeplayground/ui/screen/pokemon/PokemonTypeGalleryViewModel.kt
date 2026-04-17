@@ -6,15 +6,18 @@ import com.example.composeplayground.data.model.Pokemon
 import com.example.composeplayground.data.repository.PokemonRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import androidx.compose.runtime.Immutable
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
+@Immutable
 data class PokemonTypeSection(
     val typeName: String,
     val pokemon: List<Pokemon> = emptyList(),
     val isLoading: Boolean = true,
 )
 
+@Immutable
 data class PokemonTypeGalleryUiState(
     val sections: List<PokemonTypeSection> = ALL_POKEMON_TYPES.map { PokemonTypeSection(it) },
     val error: String? = null,

@@ -21,9 +21,11 @@ import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
+import androidx.compose.runtime.Immutable
 
 enum class ViewMode { Grid, List }
 
+@Immutable
 data class PokemonListUiState(
     val viewMode: ViewMode = ViewMode.Grid,
     val searchQuery: String = "",
