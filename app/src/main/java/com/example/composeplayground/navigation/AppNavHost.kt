@@ -7,7 +7,12 @@ import androidx.navigation3.runtime.entryProvider
 import androidx.navigation3.runtime.rememberNavBackStack
 import androidx.navigation3.runtime.rememberSaveableStateHolderNavEntryDecorator
 import androidx.navigation3.ui.NavDisplay
+import com.example.composeplayground.ui.screen.HomeMenuScreen
 import com.example.composeplayground.ui.screen.SettingsScreen
+import com.example.composeplayground.ui.screen.picsum.PicsumDetailScreen
+import com.example.composeplayground.ui.screen.picsum.PicsumDetailViewModel
+import com.example.composeplayground.ui.screen.picsum.PicsumGalleryScreen
+import com.example.composeplayground.ui.screen.picsum.PicsumGalleryViewModel
 import com.example.composeplayground.ui.screen.pokemon.PokemonDetailScreen
 import com.example.composeplayground.ui.screen.pokemon.PokemonDetailViewModel
 import com.example.composeplayground.ui.screen.pokemon.PokemonListScreen
@@ -22,7 +27,7 @@ import org.koin.core.parameter.parametersOf
  * 應用程式的頂層導航容器，使用 Navigation3 的 [NavDisplay] 管理整個頁面堆疊。
  *
  * ## 架構說明
- * - **back stack**：以 [rememberNavBackStack] 建立，初始目的地為 [Home]，狀態在重組間持久保留
+ * - **back stack**：以 [rememberNavBackStack] 建立，初始目的地為 [Home]（菜單頁），狀態在重組間持久保留
  * - **entryDecorators**：兩個裝飾器按順序套用：
  *   1. [rememberSaveableStateHolderNavEntryDecorator]：讓各頁面的 `rememberSaveable` 狀態在離開後仍可復原
  *   2. [rememberViewModelStoreNavEntryDecorator]：將 ViewModel 的生命週期綁定至各自的 NavEntry，頁面從 back stack 移除時 ViewModel 一併清除
@@ -35,7 +40,7 @@ import org.koin.core.parameter.parametersOf
  */
 @Composable
 fun AppNavHost(modifier: Modifier = Modifier) {
-    // 以 Home 為初始目的地建立 back stack，狀態跨重組持久保留
+    // 以 Home（菜單頁）為初始目的地建立 back stack，狀態跨重組持久保留
     val backStack = rememberNavBackStack(Home)
 
     NavDisplay(
@@ -49,8 +54,16 @@ fun AppNavHost(modifier: Modifier = Modifier) {
             rememberViewModelStoreNavEntryDecorator(),
         ),
         entryProvider = entryProvider {
-            // 首頁：Pokémon 列表
+            // 首頁：菜單，列出所有功能模組
             entry<Home> {
+                HomeMenuScreen(
+                    onNavigateToPokemon = { backStack.add(PokemonHome) },
+                    onNavigateToPicsum = { backStack.add(PicsumGallery) },
+                    onNavigateToSettings = { backStack.add(Settings) },
+                )
+            }
+            // Pokémon 圖鑑列表
+            entry<PokemonHome> {
                 val viewModel = koinViewModel<PokemonListViewModel>()
                 PokemonListScreen(
                     viewModel = viewModel,
@@ -83,6 +96,41 @@ fun AppNavHost(modifier: Modifier = Modifier) {
                 PokemonTypeGalleryScreen(
                     viewModel = viewModel,
                     onNavigateToDetail = { id -> backStack.add(PokemonDetail(id)) },
+                    onBack = { backStack.removeLastOrNull() },
+                )
+            }
+            // Picsum 圖庫：兩欄 grid，1080×1080 大圖縮圖
+            entry<PicsumGallery> {
+                val viewModel = koinViewModel<PicsumGalleryViewModel>()
+                PicsumGalleryScreen(
+                    viewModel = viewModel,
+                    onNavigateToDetail = { photo ->
+                        backStack.add(
+                            PicsumDetail(
+                                photoId = photo.id,
+                                author = photo.author,
+                                originalWidth = photo.originalWidth,
+                                originalHeight = photo.originalHeight,
+                            ),
+                        )
+                    },
+                    onBack = { backStack.removeLastOrNull() },
+                )
+            }
+            // Picsum 詳細頁：全螢幕大圖 + pinch-zoom
+            entry<PicsumDetail> { key ->
+                val viewModel = koinViewModel<PicsumDetailViewModel>(
+                    parameters = {
+                        parametersOf(
+                            key.photoId,
+                            key.author,
+                            key.originalWidth,
+                            key.originalHeight,
+                        )
+                    },
+                )
+                PicsumDetailScreen(
+                    viewModel = viewModel,
                     onBack = { backStack.removeLastOrNull() },
                 )
             }

@@ -72,11 +72,23 @@ val networkModule = module {
     // 由工廠建立已套用 Auth / Logging / ContentNegotiation 的完整客戶端
     single { get<HttpClientFactory>().create(baseUrl = get(named("baseUrl"))) }
 
+    // 第二個 HttpClient 指向 Picsum Photos，用於圖庫模組。
+    // Auth 插件對 Picsum 無害（TokenProvider 回傳 null 不會附 header），故重用同一工廠。
+    single<HttpClient>(named("picsumClient")) {
+        get<HttpClientFactory>().create(baseUrl = get(named("picsumBaseUrl")))
+    }
+
     // ── API 服務 ──────────────────────────────────────────────────────────────
     single<ApiService> { KtorApiService(get(), get()) }
 
+    // 給 Picsum 用的獨立 ApiService 實例，使用 named qualifier 區分
+    single<ApiService>(named("picsumApi")) {
+        KtorApiService(get(named("picsumClient")), get())
+    }
+
     // ── URL 設定 ──────────────────────────────────────────────────────────────
     single(named("baseUrl")) { "https://pokeapi.co/api/v2/" }
+    single(named("picsumBaseUrl")) { "https://picsum.photos/" }
     // PokéAPI 無需 Token 刷新；refreshUrl 保留作為未來串接需認證 API 時的擴充點
     single(named("refreshUrl")) { "" }
 }

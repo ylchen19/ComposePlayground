@@ -13,9 +13,13 @@ import kotlinx.serialization.Serializable
  * 新增頁面時在此檔案加入對應 Key，再至 [AppNavHost] 的 `entryProvider` 中補上 `entry<Key>` 區塊。
  */
 
-/** 首頁（Pokémon 列表），無需額外參數。 */
+/** 首頁菜單，列出所有可用模組（Pokémon、Picsum）。 */
 @Serializable
 data object Home : NavKey
+
+/** Pokémon 圖鑑列表。 */
+@Serializable
+data object PokemonHome : NavKey
 
 /**
  * Pokémon 詳細資訊頁。
@@ -32,3 +36,20 @@ data object Settings : NavKey
 /** 依屬性分類的寶可夢圖鑑，每種屬性顯示為一列 LazyRow。 */
 @Serializable
 data object PokemonTypeGallery : NavKey
+
+/** Picsum 圖庫列表（兩欄等高 grid，無限滾動）。 */
+@Serializable
+data object PicsumGallery : NavKey
+
+/**
+ * Picsum 詳細頁（全螢幕大圖 + 縮放）。
+ *
+ * 直接攜帶顯示所需欄位，避免再回打 API 查詢。
+ */
+@Serializable
+data class PicsumDetail(
+    val photoId: String,
+    val author: String,
+    val originalWidth: Int,
+    val originalHeight: Int,
+) : NavKey
