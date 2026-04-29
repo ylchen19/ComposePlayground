@@ -19,11 +19,13 @@ Android Compose 練習專案，用於探索現代 Android 開發技術棧。
 
 ```
 com.example.composeplayground/
-├── ComposePlaygroundApp.kt        # Application，初始化 Koin (appModule, networkModule)
+├── ComposePlaygroundApp.kt        # Application，初始化 Koin (appModule, networkModule, pokemonModule, picsumModule)
 ├── MainActivity.kt                # 入口 Activity，載入 AppNavHost
 ├── di/
 │   ├── AppModule.kt               # 基本 Koin module
-│   └── NetworkModule.kt           # 網路層 Koin module（HttpClient, ApiService, Token, Cache）
+│   ├── NetworkModule.kt           # 網路層 Koin module（HttpClient×2, ApiService×2, Token, Cache）
+│   ├── PokemonModule.kt           # Pokémon 功能 Koin module
+│   └── PicsumModule.kt            # Picsum 圖庫 Koin module
 ├── navigation/
 │   ├── NavKeys.kt                 # 導航 Key（@Serializable + NavKey）
 │   └── AppNavHost.kt              # NavDisplay + entryProvider + ViewModel/State decorators
@@ -42,11 +44,45 @@ com.example.composeplayground/
 │   └── connectivity/
 │       ├── ConnectivityObserver.kt # 連線監聽介面（StateFlow + Flow）
 │       └── NetworkConnectivityObserver.kt
+├── data/
+│   ├── model/
+│   │   ├── PokemonApiModels.kt    # Pokémon API DTO
+│   │   ├── PokemonDomainModels.kt # @Immutable Pokémon domain models
+│   │   └── PicsumModels.kt        # PicsumPhotoDto + @Immutable PicsumPhoto（含 thumbnailUrl/fullSizeUrl）
+│   ├── paging/
+│   │   ├── PokemonPagingSource.kt
+│   │   ├── TypeFilteredPagingSource.kt
+│   │   └── PicsumPagingSource.kt  # page 1-indexed，空陣列代表最後一頁
+│   └── repository/
+│       ├── PokemonRepository.kt
+│       ├── PokemonRepositoryImpl.kt
+│       ├── PicsumRepository.kt    # interface
+│       └── PicsumRepositoryImpl.kt
 └── ui/
     ├── screen/
-    │   ├── HomeScreen.kt
-    │   ├── DetailScreen.kt
-    │   └── SettingsScreen.kt
+    │   ├── HomeMenuScreen.kt       # 首頁菜單，列出 Pokémon / Picsum 入口
+    │   ├── SettingsScreen.kt
+    │   ├── pokemon/               # Pokémon 功能模組
+    │   │   ├── PokemonListScreen.kt
+    │   │   ├── PokemonListViewModel.kt
+    │   │   ├── PokemonDetailScreen.kt
+    │   │   ├── PokemonDetailViewModel.kt
+    │   │   ├── PokemonTypeGalleryScreen.kt
+    │   │   ├── PokemonTypeGalleryViewModel.kt
+    │   │   └── components/
+    │   │       ├── PokemonGridCard.kt
+    │   │       ├── PokemonListItem.kt
+    │   │       ├── PokemonTypeChip.kt
+    │   │       ├── ShimmerEffect.kt
+    │   │       └── UniformHeightLazyRow.kt
+    │   └── picsum/                # Picsum 圖庫模組
+    │       ├── PicsumGalleryScreen.kt   # 兩欄等高 grid，1080×1080 大圖縮圖
+    │       ├── PicsumGalleryViewModel.kt
+    │       ├── PicsumDetailScreen.kt    # 全螢幕大圖 + pinch-zoom
+    │       ├── PicsumDetailViewModel.kt
+    │       └── components/
+    │           ├── PicsumGridCard.kt    # 1:1 卡片，底部作者資訊
+    │           └── ZoomableAsyncImage.kt # detectTransformGestures pinch-zoom（1x–5x）
     └── theme/                      # Material 3 主題（Color, Theme, Type）
 ```
 
@@ -64,5 +100,6 @@ com.example.composeplayground/
 - **DI:** 所有依賴透過 Koin module 註冊，使用 `single {}` (singleton) / `factory {}` (每次新建) / `viewModel {}`
 - **Navigation:** 新頁面需在 `NavKeys.kt` 加 `@Serializable data object/class : NavKey`，並在 `AppNavHost.kt` 的 `entryProvider` 中加 `entry<Key>`
 - **Network:** API 呼叫統一透過 `ApiService` 介面，回傳 `NetworkResult<T>`，使用 `safeApiCall` 包裝錯誤處理
-- **Base URL:** 在 `NetworkModule.kt` 中以 `named("baseUrl")` 設定
+- **多 API Base URL:** 每個第三方 API 在 `NetworkModule.kt` 以 `named("xxxBaseUrl")` + `named("xxxClient")` + `named("xxxApi")` 建立獨立的 HttpClient / ApiService 組合，再於對應的 `XxxModule.kt` 注入
 - **Compose:** Screen composable 接收事件回呼（`onNavigateTo`, `onBack`），不直接持有 back stack 引用
+- **詳細頁導航參數:** 優先透過 NavKey 攜帶必要欄位（id/primitive fields），避免詳細頁再回打 API 查單筆
