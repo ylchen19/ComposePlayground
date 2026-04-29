@@ -15,76 +15,62 @@ Android Compose 練習專案，用於探索現代 Android 開發技術棧。
 
 ## Project Structure
 
-單模組 `:app`，套件結構如下：
+多模組架構：`:app` + `:core:network` + `:core:designsystem` + `:core:navigation`。Feature 程式碼（Pokémon、Picsum）暫時保留在 `:app`，未來會逐步抽成 `:feature:pokemon` / `:feature:picsum`。
 
 ```
-com.example.composeplayground/
-├── ComposePlaygroundApp.kt        # Application，初始化 Koin (appModule, networkModule, pokemonModule, picsumModule)
-├── MainActivity.kt                # 入口 Activity，載入 AppNavHost
-├── di/
-│   ├── AppModule.kt               # 基本 Koin module
-│   ├── NetworkModule.kt           # 網路層 Koin module（HttpClient×2, ApiService×2, Token, Cache）
-│   ├── PokemonModule.kt           # Pokémon 功能 Koin module
-│   └── PicsumModule.kt            # Picsum 圖庫 Koin module
-├── navigation/
-│   ├── NavKeys.kt                 # 導航 Key（@Serializable + NavKey）
-│   └── AppNavHost.kt              # NavDisplay + entryProvider + ViewModel/State decorators
-├── network/
-│   ├── NetworkResult.kt           # sealed interface Success/Error/Loading + safeApiCall
-│   ├── api/
-│   │   ├── ApiService.kt          # HTTP 操作介面 + inline reified extensions
-│   │   └── KtorApiService.kt      # Ktor 實作
-│   ├── auth/
-│   │   ├── TokenProvider.kt       # Token 管理介面
-│   │   └── InMemoryTokenProvider.kt
-│   ├── cache/
-│   │   └── CacheConfig.kt         # OkHttp disk cache 設定
-│   ├── client/
-│   │   └── HttpClientFactory.kt   # Ktor HttpClient 工廠（Auth, Logging, ContentNegotiation）
-│   └── connectivity/
-│       ├── ConnectivityObserver.kt # 連線監聽介面（StateFlow + Flow）
-│       └── NetworkConnectivityObserver.kt
-├── data/
-│   ├── model/
-│   │   ├── PokemonApiModels.kt    # Pokémon API DTO
-│   │   ├── PokemonDomainModels.kt # @Immutable Pokémon domain models
-│   │   └── PicsumModels.kt        # PicsumPhotoDto + @Immutable PicsumPhoto（含 thumbnailUrl/fullSizeUrl）
-│   ├── paging/
-│   │   ├── PokemonPagingSource.kt
-│   │   ├── TypeFilteredPagingSource.kt
-│   │   └── PicsumPagingSource.kt  # page 1-indexed，空陣列代表最後一頁
-│   └── repository/
-│       ├── PokemonRepository.kt
-│       ├── PokemonRepositoryImpl.kt
-│       ├── PicsumRepository.kt    # interface
-│       └── PicsumRepositoryImpl.kt
-└── ui/
-    ├── screen/
-    │   ├── HomeMenuScreen.kt       # 首頁菜單，列出 Pokémon / Picsum 入口
-    │   ├── SettingsScreen.kt
-    │   ├── pokemon/               # Pokémon 功能模組
-    │   │   ├── PokemonListScreen.kt
-    │   │   ├── PokemonListViewModel.kt
-    │   │   ├── PokemonDetailScreen.kt
-    │   │   ├── PokemonDetailViewModel.kt
-    │   │   ├── PokemonTypeGalleryScreen.kt
-    │   │   ├── PokemonTypeGalleryViewModel.kt
-    │   │   └── components/
-    │   │       ├── PokemonGridCard.kt
-    │   │       ├── PokemonListItem.kt
-    │   │       ├── PokemonTypeChip.kt
-    │   │       ├── ShimmerEffect.kt
-    │   │       └── UniformHeightLazyRow.kt
-    │   └── picsum/                # Picsum 圖庫模組
-    │       ├── PicsumGalleryScreen.kt   # 兩欄等高 grid，1080×1080 大圖縮圖
-    │       ├── PicsumGalleryViewModel.kt
-    │       ├── PicsumDetailScreen.kt    # 全螢幕大圖 + pinch-zoom
-    │       ├── PicsumDetailViewModel.kt
-    │       └── components/
-    │           ├── PicsumGridCard.kt    # 1:1 卡片，底部作者資訊
-    │           └── ZoomableAsyncImage.kt # detectTransformGestures pinch-zoom（1x–5x）
-    └── theme/                      # Material 3 主題（Color, Theme, Type）
+ComposePlayground/
+├── app/                                          # application module
+│   └── src/main/java/com/example/composeplayground/
+│       ├── ComposePlaygroundApp.kt               # Application，初始化 Koin
+│       │                                         # (coreNetworkModule, designSystemModule,
+│       │                                         #  appNetworkModule, pokemonModule, picsumModule)
+│       ├── MainActivity.kt
+│       ├── di/
+│       │   ├── NetworkModule.kt                  # appNetworkModule：feature URL / HttpClient / ApiService 實例
+│       │   ├── PokemonModule.kt
+│       │   └── PicsumModule.kt
+│       ├── navigation/
+│       │   └── AppNavHost.kt                     # NavDisplay + entryProvider + ViewModel/State decorators
+│       ├── data/
+│       │   ├── model/                            # PokemonApiModels, PokemonDomainModels, PicsumModels
+│       │   ├── paging/                           # PokemonPagingSource, TypeFilteredPagingSource, PicsumPagingSource
+│       │   └── repository/                       # PokemonRepository(Impl), PicsumRepository(Impl)
+│       └── ui/screen/
+│           ├── HomeMenuScreen.kt
+│           ├── SettingsScreen.kt
+│           ├── pokemon/                          # List / Detail / TypeGallery + ViewModel + components
+│           └── picsum/                           # Gallery / Detail + ViewModel + components
+│
+├── core/
+│   ├── network/                                  # 網路層基礎設施（無 feature 相依）
+│   │   └── src/main/kotlin/com/example/composeplayground/network/
+│   │       ├── NetworkResult.kt                  # sealed interface Success/Error/Loading + safeApiCall
+│   │       ├── api/
+│   │       │   ├── ApiService.kt                 # HTTP 操作介面 + inline reified extensions
+│   │       │   └── KtorApiService.kt             # Ktor 實作
+│   │       ├── auth/
+│   │       │   ├── TokenProvider.kt
+│   │       │   └── InMemoryTokenProvider.kt
+│   │       ├── cache/CacheConfig.kt              # OkHttp disk cache 設定
+│   │       ├── client/HttpClientFactory.kt       # Ktor HttpClient 工廠（Auth, Logging, ContentNegotiation）
+│   │       ├── connectivity/                     # ConnectivityObserver(+ NetworkConnectivityObserver)
+│   │       └── di/CoreNetworkModule.kt           # coreNetworkModule（HttpClientFactory, TokenProvider, CacheConfig 等）
+│   │
+│   ├── designsystem/                             # Material 3 主題與相關 ViewModel
+│   │   └── src/main/kotlin/com/example/composeplayground/ui/theme/
+│   │       ├── Color.kt / Theme.kt / Type.kt     # ComposePlaygroundTheme
+│   │       ├── ThemeConfig.kt                    # DarkModeOption + ThemeConfig data class
+│   │       ├── ThemeRepository.kt
+│   │       ├── DataStoreThemeRepository.kt       # DataStore Preferences 實作（檔名 theme_preferences）
+│   │       ├── ThemeViewModel.kt
+│   │       └── di/DesignSystemModule.kt          # designSystemModule
+│   │
+│   └── navigation/                               # 共用導航 Key
+│       └── src/main/kotlin/com/example/composeplayground/navigation/
+│           └── NavKeys.kt                        # @Serializable + NavKey
 ```
+
+依賴方向：`:app → :core:network`、`:app → :core:designsystem`、`:app → :core:navigation`，:core 模組之間互不依賴。
 
 ## Build Commands
 

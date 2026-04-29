@@ -24,3 +24,6 @@ dependencyResolutionManagement {
 
 rootProject.name = "ComposePlayground"
 include(":app")
+include(":core:network")
+include(":core:designsystem")
+include(":core:navigation")
