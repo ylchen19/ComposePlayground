@@ -1,10 +1,13 @@
 package com.example.composeplayground.ui.screen.picsum
 
 import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -17,6 +20,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.grid.GridCells
@@ -33,23 +37,33 @@ import androidx.compose.foundation.lazy.staggeredgrid.rememberLazyStaggeredGridS
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.List
+import androidx.compose.material.icons.automirrored.filled.Sort
+import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
@@ -91,9 +105,18 @@ fun PicsumGalleryScreen(
         }
     }
 
+    val snackbarHostState = remember { SnackbarHostState() }
+    LaunchedEffect(uiState.sortLoadError) {
+        uiState.sortLoadError?.let { msg ->
+            snackbarHostState.showSnackbar(msg)
+            viewModel.dismissSortError()
+        }
+    }
+
     PicsumTheme {
         Scaffold(
             modifier = modifier,
+            snackbarHost = { SnackbarHost(snackbarHostState) },
             topBar = {
                 TopAppBar(
                     title = { Text("Picsum 圖庫") },
@@ -103,6 +126,10 @@ fun PicsumGalleryScreen(
                         }
                     },
                     actions = {
+                        SortMenuButton(
+                            currentSort = uiState.sortMode,
+                            onSortSelected = viewModel::setSortMode,
+                        )
                         IconButton(onClick = viewModel::cycleViewMode) {
                             when (uiState.viewMode) {
                                 PicsumViewMode.Grid -> Icon(
@@ -147,6 +174,9 @@ fun PicsumGalleryScreen(
                     listState = listState,
                     staggeredState = staggeredState,
                 )
+                if (uiState.isLoadingAllForSort) {
+                    SortLoadingOverlay(progress = uiState.sortLoadProgress)
+                }
             }
         }
     }
@@ -432,6 +462,157 @@ private fun StaggeredGridIcon() {
             Box(modifier = Modifier.size(width = 8.dp, height = 11.dp).background(
                 MaterialTheme.colorScheme.onSurface, MaterialTheme.shapes.extraSmall,
             ))
+        }
+    }
+}
+
+@Composable
+private fun SortMenuButton(
+    currentSort: PicsumSortMode,
+    onSortSelected: (PicsumSortMode) -> Unit,
+) {
+    var expanded by remember { mutableStateOf(false) }
+    Box {
+        IconButton(onClick = { expanded = true }) {
+            Icon(Icons.AutoMirrored.Filled.Sort, contentDescription = "排序")
+        }
+        DropdownMenu(
+            expanded = expanded,
+            onDismissRequest = { expanded = false },
+        ) {
+            SortMenuItem(
+                label = "隨機",
+                selected = currentSort == PicsumSortMode.Random,
+                onClick = {
+                    onSortSelected(PicsumSortMode.Random)
+                    expanded = false
+                },
+            )
+            SortMenuItem(
+                label = "解析度：高 → 低",
+                selected = currentSort == PicsumSortMode.ResolutionDesc,
+                onClick = {
+                    onSortSelected(PicsumSortMode.ResolutionDesc)
+                    expanded = false
+                },
+            )
+            SortMenuItem(
+                label = "解析度：低 → 高",
+                selected = currentSort == PicsumSortMode.ResolutionAsc,
+                onClick = {
+                    onSortSelected(PicsumSortMode.ResolutionAsc)
+                    expanded = false
+                },
+            )
+            SortMenuItem(
+                label = "作者 A → Z",
+                selected = currentSort == PicsumSortMode.AuthorAsc,
+                onClick = {
+                    onSortSelected(PicsumSortMode.AuthorAsc)
+                    expanded = false
+                },
+            )
+        }
+    }
+}
+
+@Composable
+private fun SortMenuItem(
+    label: String,
+    selected: Boolean,
+    onClick: () -> Unit,
+) {
+    DropdownMenuItem(
+        text = { Text(label) },
+        onClick = onClick,
+        trailingIcon = {
+            if (selected) {
+                Icon(Icons.Default.Check, contentDescription = null)
+            }
+        },
+    )
+}
+
+@Composable
+private fun SortLoadingOverlay(progress: SortLoadProgress?) {
+    val loaded = progress?.loadedPages ?: 0
+    val total = progress?.totalPagesEstimate
+    val targetFraction = if (total != null && total > 0) {
+        (loaded.toFloat() / total).coerceIn(0f, 1f)
+    } else null
+
+    val animatedFraction by animateFloatAsState(
+        targetValue = targetFraction ?: 0f,
+        label = "sort_load_fraction",
+    )
+
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(MaterialTheme.colorScheme.scrim.copy(alpha = 0.6f))
+            .clickable(
+                interactionSource = remember { MutableInteractionSource() },
+                indication = null,
+            ) { /* 攔截點擊，避免 loading 期間穿透到底下圖片 */ },
+        contentAlignment = Alignment.Center,
+    ) {
+        Surface(
+            modifier = Modifier
+                .padding(32.dp)
+                .widthIn(min = 240.dp, max = 320.dp),
+            shape = MaterialTheme.shapes.large,
+            color = MaterialTheme.colorScheme.surface,
+            tonalElevation = 4.dp,
+            shadowElevation = 12.dp,
+        ) {
+            Column(
+                modifier = Modifier.padding(horizontal = 28.dp, vertical = 28.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+            ) {
+                Box(
+                    modifier = Modifier.size(80.dp),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    if (targetFraction != null) {
+                        CircularProgressIndicator(
+                            progress = { animatedFraction },
+                            modifier = Modifier.fillMaxSize(),
+                            strokeWidth = 6.dp,
+                            color = MaterialTheme.colorScheme.primary,
+                            trackColor = MaterialTheme.colorScheme.surfaceVariant,
+                        )
+                        Text(
+                            text = "${(animatedFraction * 100).toInt()}%",
+                            style = MaterialTheme.typography.titleMedium,
+                            color = MaterialTheme.colorScheme.primary,
+                        )
+                    } else {
+                        CircularProgressIndicator(
+                            modifier = Modifier.fillMaxSize(),
+                            strokeWidth = 6.dp,
+                            color = MaterialTheme.colorScheme.primary,
+                            trackColor = MaterialTheme.colorScheme.surfaceVariant,
+                        )
+                    }
+                }
+
+                Spacer(Modifier.height(20.dp))
+                Text(
+                    text = "正在載入全部相片",
+                    style = MaterialTheme.typography.titleMedium,
+                    color = MaterialTheme.colorScheme.onSurface,
+                )
+                Spacer(Modifier.height(6.dp))
+                Text(
+                    text = when {
+                        total != null -> "已載入 $loaded / $total 頁"
+                        loaded > 0 -> "已載入 $loaded 頁…"
+                        else -> "準備中…"
+                    },
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
         }
     }
 }
