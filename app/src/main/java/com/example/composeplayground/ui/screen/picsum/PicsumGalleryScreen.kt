@@ -1,27 +1,44 @@
 package com.example.composeplayground.ui.screen.picsum
 
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.togetherWith
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.LazyGridState
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
-import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.grid.rememberLazyGridState
+import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.lazy.staggeredgrid.LazyStaggeredGridState
+import androidx.compose.foundation.lazy.staggeredgrid.LazyVerticalStaggeredGrid
+import androidx.compose.foundation.lazy.staggeredgrid.StaggeredGridCells
+import androidx.compose.foundation.lazy.staggeredgrid.StaggeredGridItemSpan
+import androidx.compose.foundation.lazy.staggeredgrid.rememberLazyStaggeredGridState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.List
+import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -29,14 +46,24 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.derivedStateOf
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.paging.LoadState
 import androidx.paging.compose.LazyPagingItems
 import androidx.paging.compose.collectAsLazyPagingItems
 import com.example.composeplayground.data.model.PicsumPhoto
 import com.example.composeplayground.ui.screen.picsum.components.PicsumGridCard
+import com.example.composeplayground.ui.screen.picsum.components.PicsumListCard
+import com.example.composeplayground.ui.screen.picsum.components.PicsumShimmerGridCard
+import com.example.composeplayground.ui.screen.picsum.components.PicsumShimmerListItem
+import com.example.composeplayground.ui.screen.picsum.components.PicsumShimmerStaggeredCard
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -46,8 +73,23 @@ fun PicsumGalleryScreen(
     onBack: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val pagingItems = viewModel.photos.collectAsLazyPagingItems()
+
     val gridState = rememberLazyGridState()
+    val listState = rememberLazyListState()
+    val staggeredState = rememberLazyStaggeredGridState()
+    val coroutineScope = rememberCoroutineScope()
+
+    val showScrollToTop by remember {
+        derivedStateOf {
+            when (uiState.viewMode) {
+                PicsumViewMode.Grid -> gridState.firstVisibleItemIndex > 0
+                PicsumViewMode.List -> listState.firstVisibleItemIndex > 0
+                PicsumViewMode.StaggeredGrid -> staggeredState.firstVisibleItemIndex > 0
+            }
+        }
+    }
 
     Scaffold(
         modifier = modifier,
@@ -59,7 +101,36 @@ fun PicsumGalleryScreen(
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "返回")
                     }
                 },
+                actions = {
+                    IconButton(onClick = viewModel::cycleViewMode) {
+                        when (uiState.viewMode) {
+                            PicsumViewMode.Grid -> Icon(
+                                Icons.AutoMirrored.Filled.List,
+                                contentDescription = "切換為列表",
+                            )
+                            PicsumViewMode.List -> StaggeredGridIcon()
+                            PicsumViewMode.StaggeredGrid -> GridViewIcon()
+                        }
+                    }
+                },
             )
+        },
+        floatingActionButton = {
+            if (showScrollToTop) {
+                FloatingActionButton(
+                    onClick = {
+                        coroutineScope.launch {
+                            when (uiState.viewMode) {
+                                PicsumViewMode.Grid -> gridState.animateScrollToItem(0)
+                                PicsumViewMode.List -> listState.animateScrollToItem(0)
+                                PicsumViewMode.StaggeredGrid -> staggeredState.animateScrollToItem(0)
+                            }
+                        }
+                    },
+                ) {
+                    Icon(Icons.Default.KeyboardArrowUp, contentDescription = "回到頂部")
+                }
+            }
         },
     ) { innerPadding ->
         Box(
@@ -67,24 +138,86 @@ fun PicsumGalleryScreen(
                 .fillMaxSize()
                 .padding(innerPadding),
         ) {
-            when {
-                pagingItems.loadState.refresh is LoadState.Loading -> {
-                    Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                        CircularProgressIndicator()
-                    }
-                }
-                pagingItems.loadState.refresh is LoadState.Error -> {
-                    val err = (pagingItems.loadState.refresh as LoadState.Error).error
-                    PicsumErrorContent(
-                        message = err.localizedMessage ?: "載入失敗",
-                        onRetry = pagingItems::retry,
-                    )
-                }
-                else -> PicsumGrid(
-                    pagingItems = pagingItems,
-                    state = gridState,
-                    onClickPhoto = onNavigateToDetail,
+            PicsumPagingContent(
+                viewMode = uiState.viewMode,
+                pagingItems = pagingItems,
+                onClickPhoto = onNavigateToDetail,
+                gridState = gridState,
+                listState = listState,
+                staggeredState = staggeredState,
+            )
+        }
+    }
+}
+
+// ── Private composables ──────────────────────────────────────────────────────
+
+@Composable
+private fun PicsumPagingContent(
+    viewMode: PicsumViewMode,
+    pagingItems: LazyPagingItems<PicsumPhoto>,
+    onClickPhoto: (PicsumPhoto) -> Unit,
+    gridState: LazyGridState,
+    listState: LazyListState,
+    staggeredState: LazyStaggeredGridState,
+) {
+    AnimatedContent(
+        targetState = viewMode,
+        transitionSpec = { fadeIn() togetherWith fadeOut() },
+        label = "picsum_view_mode_transition",
+    ) { mode ->
+        when {
+            pagingItems.loadState.refresh is LoadState.Loading -> PicsumShimmerContent(mode)
+            pagingItems.loadState.refresh is LoadState.Error -> {
+                val err = (pagingItems.loadState.refresh as LoadState.Error).error
+                PicsumErrorContent(
+                    message = err.localizedMessage ?: "載入失敗",
+                    onRetry = pagingItems::retry,
                 )
+            }
+            else -> when (mode) {
+                PicsumViewMode.Grid -> PicsumGrid(pagingItems, gridState, onClickPhoto)
+                PicsumViewMode.List -> PicsumList(pagingItems, listState, onClickPhoto)
+                PicsumViewMode.StaggeredGrid -> PicsumStaggeredGrid(pagingItems, staggeredState, onClickPhoto)
+            }
+        }
+    }
+}
+
+@Composable
+private fun PicsumShimmerContent(viewMode: PicsumViewMode) {
+    val staggeredRatios = remember {
+        listOf(1f, 0.75f, 1.2f, 0.6f, 1.5f, 0.8f, 1.1f, 0.7f, 0.9f, 1.3f, 0.65f, 1.4f)
+    }
+    when (viewMode) {
+        PicsumViewMode.Grid -> {
+            LazyVerticalGrid(
+                columns = GridCells.Fixed(2),
+                contentPadding = PaddingValues(12.dp),
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp),
+            ) {
+                items(8) { PicsumShimmerGridCard() }
+            }
+        }
+        PicsumViewMode.List -> {
+            LazyColumn(
+                contentPadding = PaddingValues(horizontal = 12.dp, vertical = 8.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
+                items(6) { PicsumShimmerListItem() }
+            }
+        }
+        PicsumViewMode.StaggeredGrid -> {
+            LazyVerticalStaggeredGrid(
+                columns = StaggeredGridCells.Fixed(2),
+                contentPadding = PaddingValues(12.dp),
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                verticalItemSpacing = 12.dp,
+            ) {
+                items(staggeredRatios.size) { index ->
+                    PicsumShimmerStaggeredCard(aspectRatio = staggeredRatios[index])
+                }
             }
         }
     }
@@ -127,17 +260,107 @@ private fun PicsumGrid(
         }
         if (pagingItems.loadState.append is LoadState.Error) {
             item(span = { GridItemSpan(2) }, contentType = "append_error") {
+                AppendErrorItem(onRetry = pagingItems::retry)
+            }
+        }
+    }
+}
+
+@Composable
+private fun PicsumList(
+    pagingItems: LazyPagingItems<PicsumPhoto>,
+    state: LazyListState,
+    onClickPhoto: (PicsumPhoto) -> Unit,
+) {
+    LazyColumn(
+        state = state,
+        contentPadding = PaddingValues(horizontal = 12.dp, vertical = 8.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp),
+        modifier = Modifier.fillMaxSize(),
+    ) {
+        items(
+            count = pagingItems.itemCount,
+            key = { index -> pagingItems[index]?.id ?: index },
+            contentType = { "picsum_list" },
+        ) { index ->
+            val photo = pagingItems[index]
+            if (photo != null) {
+                PicsumListCard(
+                    photo = photo,
+                    onClick = { onClickPhoto(photo) },
+                )
+            }
+        }
+        if (pagingItems.loadState.append is LoadState.Loading) {
+            item(contentType = "loader") {
                 Box(
                     modifier = Modifier.fillMaxWidth().padding(16.dp),
                     contentAlignment = Alignment.Center,
-                ) {
-                    Button(onClick = pagingItems::retry) {
-                        Icon(Icons.Default.Refresh, contentDescription = null)
-                        Spacer(Modifier.width(8.dp))
-                        Text("重試")
-                    }
-                }
+                ) { CircularProgressIndicator() }
             }
+        }
+        if (pagingItems.loadState.append is LoadState.Error) {
+            item(contentType = "append_error") {
+                AppendErrorItem(onRetry = pagingItems::retry)
+            }
+        }
+    }
+}
+
+@Composable
+private fun PicsumStaggeredGrid(
+    pagingItems: LazyPagingItems<PicsumPhoto>,
+    state: LazyStaggeredGridState,
+    onClickPhoto: (PicsumPhoto) -> Unit,
+) {
+    LazyVerticalStaggeredGrid(
+        columns = StaggeredGridCells.Fixed(2),
+        state = state,
+        contentPadding = PaddingValues(12.dp),
+        horizontalArrangement = Arrangement.spacedBy(12.dp),
+        verticalItemSpacing = 12.dp,
+        modifier = Modifier.fillMaxSize(),
+    ) {
+        items(
+            count = pagingItems.itemCount,
+            key = { index -> pagingItems[index]?.id ?: index },
+            contentType = { "picsum_staggered" },
+        ) { index ->
+            val photo = pagingItems[index]
+            if (photo != null) {
+                PicsumGridCard(
+                    photo = photo,
+                    onClick = { onClickPhoto(photo) },
+                    useOriginalAspectRatio = true,
+                )
+            }
+        }
+        if (pagingItems.loadState.append is LoadState.Loading) {
+            item(span = StaggeredGridItemSpan.FullLine, contentType = "loader") {
+                Box(
+                    modifier = Modifier.fillMaxWidth().padding(16.dp),
+                    contentAlignment = Alignment.Center,
+                ) { CircularProgressIndicator() }
+            }
+        }
+        if (pagingItems.loadState.append is LoadState.Error) {
+            item(span = StaggeredGridItemSpan.FullLine, contentType = "append_error") {
+                AppendErrorItem(onRetry = pagingItems::retry)
+            }
+        }
+    }
+}
+
+@Composable
+private fun AppendErrorItem(onRetry: () -> Unit) {
+    Box(
+        modifier = Modifier.fillMaxWidth().padding(16.dp),
+        contentAlignment = Alignment.Center,
+    ) {
+        Button(onClick = onRetry) {
+            Icon(Icons.Default.Refresh, contentDescription = null)
+            Spacer(Modifier.width(8.dp))
+            Text("重試")
         }
     }
 }
@@ -163,6 +386,50 @@ private fun PicsumErrorContent(
                 Spacer(Modifier.width(8.dp))
                 Text("重試")
             }
+        }
+    }
+}
+
+@Composable
+private fun GridViewIcon() {
+    Row(horizontalArrangement = Arrangement.spacedBy(3.dp)) {
+        Column(verticalArrangement = Arrangement.spacedBy(3.dp)) {
+            Box(modifier = Modifier.size(8.dp).background(
+                MaterialTheme.colorScheme.onSurface, MaterialTheme.shapes.extraSmall,
+            ))
+            Box(modifier = Modifier.size(8.dp).background(
+                MaterialTheme.colorScheme.onSurface, MaterialTheme.shapes.extraSmall,
+            ))
+        }
+        Column(verticalArrangement = Arrangement.spacedBy(3.dp)) {
+            Box(modifier = Modifier.size(8.dp).background(
+                MaterialTheme.colorScheme.onSurface, MaterialTheme.shapes.extraSmall,
+            ))
+            Box(modifier = Modifier.size(8.dp).background(
+                MaterialTheme.colorScheme.onSurface, MaterialTheme.shapes.extraSmall,
+            ))
+        }
+    }
+}
+
+@Composable
+private fun StaggeredGridIcon() {
+    Row(horizontalArrangement = Arrangement.spacedBy(3.dp)) {
+        Column(verticalArrangement = Arrangement.spacedBy(3.dp)) {
+            Box(modifier = Modifier.size(width = 8.dp, height = 11.dp).background(
+                MaterialTheme.colorScheme.onSurface, MaterialTheme.shapes.extraSmall,
+            ))
+            Box(modifier = Modifier.size(width = 8.dp, height = 6.dp).background(
+                MaterialTheme.colorScheme.onSurface, MaterialTheme.shapes.extraSmall,
+            ))
+        }
+        Column(verticalArrangement = Arrangement.spacedBy(3.dp)) {
+            Box(modifier = Modifier.size(width = 8.dp, height = 6.dp).background(
+                MaterialTheme.colorScheme.onSurface, MaterialTheme.shapes.extraSmall,
+            ))
+            Box(modifier = Modifier.size(width = 8.dp, height = 11.dp).background(
+                MaterialTheme.colorScheme.onSurface, MaterialTheme.shapes.extraSmall,
+            ))
         }
     }
 }

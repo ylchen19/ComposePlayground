@@ -13,6 +13,7 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
@@ -24,26 +25,38 @@ import coil.compose.AsyncImage
 import com.example.composeplayground.data.model.PicsumPhoto
 
 /**
- * Picsum grid 卡片：1:1 等高，內含 1080×1080 大圖縮圖與作者資訊。
+ * Picsum 卡片：支援固定 1:1 等高（Grid 模式）或原始比例（StaggeredGrid 模式）。
  *
- * 圖片以 [ContentScale.Crop] 鋪滿整張卡片，提供更強烈的視覺份量；底部以半透明黑色覆蓋顯示作者名。
+ * @param useOriginalAspectRatio 為 true 時使用圖片原始長寬比，false 時固定 1:1。
  */
 @Composable
 fun PicsumGridCard(
     photo: PicsumPhoto,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
+    useOriginalAspectRatio: Boolean = false,
 ) {
+    val ratio = if (useOriginalAspectRatio) {
+        photo.originalWidth.toFloat() / photo.originalHeight.toFloat()
+    } else {
+        1f
+    }
+    val imageUrl = if (useOriginalAspectRatio) {
+        photo.scaledUrl(maxWidth = 600)
+    } else {
+        photo.thumbnailUrl(1080)
+    }
+
     Card(
         onClick = onClick,
-        modifier = modifier.aspectRatio(1f),
+        modifier = modifier.aspectRatio(ratio),
         shape = RoundedCornerShape(12.dp),
         elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
     ) {
         Box(modifier = Modifier.fillMaxSize()) {
             AsyncImage(
-                model = photo.thumbnailUrl(1080),
+                model = imageUrl,
                 contentDescription = "Photo by ${photo.author}",
                 modifier = Modifier
                     .fillMaxSize()
@@ -55,7 +68,7 @@ fun PicsumGridCard(
                     .fillMaxWidth()
                     .background(Color.Black.copy(alpha = 0.45f))
                     .padding(horizontal = 8.dp, vertical = 6.dp)
-                    .align(androidx.compose.ui.Alignment.BottomCenter),
+                    .align(Alignment.BottomCenter),
             ) {
                 Text(
                     text = photo.author,

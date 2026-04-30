@@ -39,6 +39,10 @@ data class PicsumPhoto(
     val sourceUrl: String,
 ) {
     fun thumbnailUrl(size: Int = 1080) = "https://picsum.photos/id/$id/$size/$size"
+    fun scaledUrl(maxWidth: Int = 600): String {
+        val scaledHeight = (maxWidth.toFloat() / originalWidth * originalHeight).toInt()
+        return "https://picsum.photos/id/$id/$maxWidth/$scaledHeight"
+    }
     fun fullSizeUrl() = "https://picsum.photos/id/$id/$originalWidth/$originalHeight"
 }
 
