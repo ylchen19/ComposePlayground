@@ -14,6 +14,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.update
+import kotlin.random.Random
 
 enum class PicsumViewMode { Grid, List, StaggeredGrid }
 
@@ -26,18 +27,20 @@ class PicsumGalleryViewModel(
     private val repository: PicsumRepository,
 ) : ViewModel() {
 
+    private val randomSeed: Long = Random.nextLong()
+
     val uiState: StateFlow<PicsumGalleryUiState>
         field = MutableStateFlow(PicsumGalleryUiState())
 
     val photos: Flow<PagingData<PicsumPhoto>> = Pager(
         config = PagingConfig(
-            pageSize = 30,
+            pageSize = PicsumPagingSource.PAGE_SIZE,
             prefetchDistance = 10,
-            initialLoadSize = 60,
+            initialLoadSize = PicsumPagingSource.PAGE_SIZE,
             enablePlaceholders = false,
         ),
     ) {
-        PicsumPagingSource(repository)
+        PicsumPagingSource(repository, randomSeed)
     }.flow.cachedIn(viewModelScope)
 
     fun cycleViewMode() {
