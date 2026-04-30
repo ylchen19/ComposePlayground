@@ -91,61 +91,63 @@ fun PicsumGalleryScreen(
         }
     }
 
-    Scaffold(
-        modifier = modifier,
-        topBar = {
-            TopAppBar(
-                title = { Text("Picsum 圖庫") },
-                navigationIcon = {
-                    IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "返回")
-                    }
-                },
-                actions = {
-                    IconButton(onClick = viewModel::cycleViewMode) {
-                        when (uiState.viewMode) {
-                            PicsumViewMode.Grid -> Icon(
-                                Icons.AutoMirrored.Filled.List,
-                                contentDescription = "切換為列表",
-                            )
-                            PicsumViewMode.List -> StaggeredGridIcon()
-                            PicsumViewMode.StaggeredGrid -> GridViewIcon()
+    PicsumTheme {
+        Scaffold(
+            modifier = modifier,
+            topBar = {
+                TopAppBar(
+                    title = { Text("Picsum 圖庫") },
+                    navigationIcon = {
+                        IconButton(onClick = onBack) {
+                            Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "返回")
                         }
-                    }
-                },
-            )
-        },
-        floatingActionButton = {
-            if (showScrollToTop) {
-                FloatingActionButton(
-                    onClick = {
-                        coroutineScope.launch {
+                    },
+                    actions = {
+                        IconButton(onClick = viewModel::cycleViewMode) {
                             when (uiState.viewMode) {
-                                PicsumViewMode.Grid -> gridState.animateScrollToItem(0)
-                                PicsumViewMode.List -> listState.animateScrollToItem(0)
-                                PicsumViewMode.StaggeredGrid -> staggeredState.animateScrollToItem(0)
+                                PicsumViewMode.Grid -> Icon(
+                                    Icons.AutoMirrored.Filled.List,
+                                    contentDescription = "切換為列表",
+                                )
+                                PicsumViewMode.List -> StaggeredGridIcon()
+                                PicsumViewMode.StaggeredGrid -> GridViewIcon()
                             }
                         }
                     },
-                ) {
-                    Icon(Icons.Default.KeyboardArrowUp, contentDescription = "回到頂部")
+                )
+            },
+            floatingActionButton = {
+                if (showScrollToTop) {
+                    FloatingActionButton(
+                        onClick = {
+                            coroutineScope.launch {
+                                when (uiState.viewMode) {
+                                    PicsumViewMode.Grid -> gridState.animateScrollToItem(0)
+                                    PicsumViewMode.List -> listState.animateScrollToItem(0)
+                                    PicsumViewMode.StaggeredGrid -> staggeredState.animateScrollToItem(0)
+                                }
+                            }
+                        },
+                    ) {
+                        Icon(Icons.Default.KeyboardArrowUp, contentDescription = "回到頂部")
+                    }
                 }
+            },
+        ) { innerPadding ->
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(innerPadding),
+            ) {
+                PicsumPagingContent(
+                    viewMode = uiState.viewMode,
+                    pagingItems = pagingItems,
+                    onClickPhoto = onNavigateToDetail,
+                    gridState = gridState,
+                    listState = listState,
+                    staggeredState = staggeredState,
+                )
             }
-        },
-    ) { innerPadding ->
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(innerPadding),
-        ) {
-            PicsumPagingContent(
-                viewMode = uiState.viewMode,
-                pagingItems = pagingItems,
-                onClickPhoto = onNavigateToDetail,
-                gridState = gridState,
-                listState = listState,
-                staggeredState = staggeredState,
-            )
         }
     }
 }
