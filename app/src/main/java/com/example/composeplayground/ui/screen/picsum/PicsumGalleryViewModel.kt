@@ -51,6 +51,9 @@ data class PicsumGalleryUiState(
     val isLoadingAllForSort: Boolean = false,
     val sortLoadProgress: SortLoadProgress? = null,
     val sortLoadError: String? = null,
+    val isSearchActive: Boolean = false,
+    val searchQuery: String = "",
+    val authorSuggestions: List<String> = emptyList(),
 )
 
 class PicsumGalleryViewModel(
@@ -63,10 +66,13 @@ class PicsumGalleryViewModel(
         field = MutableStateFlow(PicsumGalleryUiState())
 
     private val sortMode: MutableStateFlow<PicsumSortMode> = MutableStateFlow(PicsumSortMode.Random)
+    private val searchQuery: MutableStateFlow<String> = MutableStateFlow("")
+    private val isSearchActive: MutableStateFlow<Boolean> = MutableStateFlow(false)
 
     // 完整相片列表的單次載入快取，避免在排序模式間切換時重複拉取
     private val allPhotosMutex = Mutex()
     @Volatile private var allPhotosCache: List<PicsumPhoto>? = null
+    @Volatile private var allAuthorsCache: List<String> = emptyList()
 
     private val pagingConfig = PagingConfig(
         pageSize = PicsumPagingSource.PAGE_SIZE,
@@ -76,39 +82,79 @@ class PicsumGalleryViewModel(
     )
 
     @OptIn(ExperimentalCoroutinesApi::class)
-    val photos: Flow<PagingData<PicsumPhoto>> = sortMode
-        .flatMapLatest { mode ->
-            when (mode) {
-                PicsumSortMode.Random -> Pager(pagingConfig) {
-                    PicsumPagingSource(repository, randomSeed)
-                }.flow
-                PicsumSortMode.ResolutionDesc, PicsumSortMode.ResolutionAsc, PicsumSortMode.AuthorAsc -> flow {
-                    setLoadingAll(true)
-                    clearSortError()
-                    try {
-                        val all = loadAllPhotos()
-                        val sorted = when (mode) {
-                            PicsumSortMode.ResolutionDesc -> all.sortedByDescending { it.pixelCount }
-                            PicsumSortMode.ResolutionAsc -> all.sortedBy { it.pixelCount }
-                            PicsumSortMode.AuthorAsc -> all.sortedBy { it.author }
-                            PicsumSortMode.Random -> all
-                        }
-                        // 資料就緒，先關掉遮罩再開始 emit Pager.flow（hot flow，永不完成）
-                        setLoadingAll(false)
-                        emitAll(Pager(pagingConfig) { InMemoryPicsumPagingSource(sorted) }.flow)
-                    } catch (ce: kotlinx.coroutines.CancellationException) {
-                        throw ce
-                    } catch (e: Throwable) {
-                        setSortError(e.localizedMessage ?: "載入全部相片失敗")
-                        emit(PagingData.empty())
-                    } finally {
-                        // 錯誤/取消路徑的兜底
-                        setLoadingAll(false)
+    val photos: Flow<PagingData<PicsumPhoto>> = kotlinx.coroutines.flow.combine(
+        sortMode,
+        searchQuery,
+        isSearchActive
+    ) { sort, query, searchActive ->
+        Triple(sort, query, searchActive)
+    }.flatMapLatest { (mode, query, searchActive) ->
+        val needsAllData = mode != PicsumSortMode.Random || query.isNotEmpty() || searchActive
+
+        if (!needsAllData) {
+            Pager(pagingConfig) {
+                PicsumPagingSource(repository, randomSeed)
+            }.flow
+        } else {
+            flow {
+                setLoadingAll(true)
+                clearSortError()
+                try {
+                    val all = loadAllPhotos()
+                    var filtered = all
+                    if (query.isNotEmpty()) {
+                        filtered = all.filter { it.author.contains(query, ignoreCase = true) }
                     }
+                    val sorted = when (mode) {
+                        PicsumSortMode.ResolutionDesc -> filtered.sortedByDescending { it.pixelCount }
+                        PicsumSortMode.ResolutionAsc -> filtered.sortedBy { it.pixelCount }
+                        PicsumSortMode.AuthorAsc -> filtered.sortedBy { it.author }
+                        PicsumSortMode.Random -> filtered
+                    }
+                    // 更新建議列表
+                    val suggestions = if (query.isEmpty()) {
+                         allAuthorsCache
+                    } else {
+                         allAuthorsCache.filter { it.contains(query, ignoreCase = true) }
+                    }
+                    uiState.update { it.copy(authorSuggestions = suggestions) }
+
+                    // 資料就緒，先關掉遮罩再開始 emit Pager.flow（hot flow，永不完成）
+                    setLoadingAll(false)
+                    emitAll(Pager(pagingConfig) { InMemoryPicsumPagingSource(sorted) }.flow)
+                } catch (ce: kotlinx.coroutines.CancellationException) {
+                    throw ce
+                } catch (e: Throwable) {
+                    setSortError(e.localizedMessage ?: "載入全部相片失敗")
+                    emit(PagingData.empty())
+                } finally {
+                    // 錯誤/取消路徑的兜底
+                    setLoadingAll(false)
                 }
             }
         }
-        .cachedIn(viewModelScope)
+    }.cachedIn(viewModelScope)
+
+    fun toggleSearchActive() {
+        val current = isSearchActive.value
+        val next = !current
+        isSearchActive.value = next
+        uiState.update { it.copy(isSearchActive = next) }
+        if (!next) {
+            searchQuery.value = ""
+            uiState.update { it.copy(searchQuery = "") }
+        }
+    }
+
+    fun updateSearchQuery(query: String) {
+        searchQuery.value = query
+        uiState.update { it.copy(searchQuery = query) }
+    }
+
+    fun selectAuthor(author: String) {
+        searchQuery.value = author
+        uiState.update { it.copy(searchQuery = author) }
+    }
 
     fun cycleViewMode() {
         uiState.update {
@@ -192,7 +238,10 @@ class PicsumGalleryViewModel(
 
                 nextPage = batchEnd + 1
             }
-            accumulated.toList().also { allPhotosCache = it }
+            accumulated.toList().also { photos -> 
+                allPhotosCache = photos
+                allAuthorsCache = photos.map { it.author }.distinct().sorted()
+            }
         }
     }
 

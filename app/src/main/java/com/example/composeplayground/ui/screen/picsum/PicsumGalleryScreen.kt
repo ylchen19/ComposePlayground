@@ -39,8 +39,10 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.List
 import androidx.compose.material.icons.automirrored.filled.Sort
 import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenu
@@ -49,8 +51,10 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.ListItem
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SearchBar
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
@@ -126,30 +130,86 @@ fun PicsumGalleryScreen(
             modifier = modifier,
             snackbarHost = { SnackbarHost(snackbarHostState) },
             topBar = {
-                TopAppBar(
-                    title = { Text("Picsum 圖庫") },
-                    navigationIcon = {
-                        IconButton(onClick = onBack) {
-                            Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "返回")
-                        }
-                    },
-                    actions = {
-                        SortMenuButton(
-                            currentSort = uiState.sortMode,
-                            onSortSelected = viewModel::setSortMode,
-                        )
-                        IconButton(onClick = viewModel::cycleViewMode) {
-                            when (uiState.viewMode) {
-                                PicsumViewMode.Grid -> Icon(
-                                    Icons.AutoMirrored.Filled.List,
-                                    contentDescription = "切換為列表",
+                Column {
+                    if (uiState.isSearchActive) {
+                        TopAppBar(
+                            title = {
+                                androidx.compose.material3.TextField(
+                                    value = uiState.searchQuery,
+                                    onValueChange = viewModel::updateSearchQuery,
+                                    placeholder = { Text("搜尋作者...") },
+                                    singleLine = true,
+                                    modifier = Modifier.fillMaxWidth(),
+                                    colors = androidx.compose.material3.TextFieldDefaults.colors(
+                                        focusedContainerColor = androidx.compose.ui.graphics.Color.Transparent,
+                                        unfocusedContainerColor = androidx.compose.ui.graphics.Color.Transparent,
+                                        disabledContainerColor = androidx.compose.ui.graphics.Color.Transparent,
+                                        focusedIndicatorColor = androidx.compose.ui.graphics.Color.Transparent,
+                                        unfocusedIndicatorColor = androidx.compose.ui.graphics.Color.Transparent,
+                                    )
                                 )
-                                PicsumViewMode.List -> StaggeredGridIcon()
-                                PicsumViewMode.StaggeredGrid -> GridViewIcon()
+                            },
+                            navigationIcon = {
+                                IconButton(onClick = viewModel::toggleSearchActive) {
+                                    Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "關閉搜尋")
+                                }
+                            },
+                            actions = {
+                                if (uiState.searchQuery.isNotEmpty()) {
+                                    IconButton(onClick = { viewModel.updateSearchQuery("") }) {
+                                        Icon(Icons.Default.Close, contentDescription = "清除")
+                                    }
+                                }
+                            }
+                        )
+                        val showSuggestions = uiState.authorSuggestions.isNotEmpty() &&
+                                !(uiState.authorSuggestions.size == 1 && uiState.authorSuggestions.first().equals(uiState.searchQuery, ignoreCase = true))
+
+                        if (showSuggestions) {
+                            androidx.compose.foundation.lazy.LazyRow(
+                                contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
+                                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                modifier = Modifier.fillMaxWidth().background(MaterialTheme.colorScheme.surface)
+                            ) {
+                                items(uiState.authorSuggestions.size) { index ->
+                                    val author = uiState.authorSuggestions[index]
+                                    androidx.compose.material3.SuggestionChip(
+                                        onClick = { viewModel.selectAuthor(author) },
+                                        label = { Text(author) }
+                                    )
+                                }
                             }
                         }
-                    },
-                )
+                    } else {
+                        TopAppBar(
+                            title = { Text("Picsum 圖庫") },
+                            navigationIcon = {
+                                IconButton(onClick = onBack) {
+                                    Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "返回")
+                                }
+                            },
+                            actions = {
+                                IconButton(onClick = viewModel::toggleSearchActive) {
+                                    Icon(Icons.Default.Search, contentDescription = "搜尋")
+                                }
+                                SortMenuButton(
+                                    currentSort = uiState.sortMode,
+                                    onSortSelected = viewModel::setSortMode,
+                                )
+                                IconButton(onClick = viewModel::cycleViewMode) {
+                                    when (uiState.viewMode) {
+                                        PicsumViewMode.Grid -> Icon(
+                                            Icons.AutoMirrored.Filled.List,
+                                            contentDescription = "切換為列表",
+                                        )
+                                        PicsumViewMode.List -> StaggeredGridIcon()
+                                        PicsumViewMode.StaggeredGrid -> GridViewIcon()
+                                    }
+                                }
+                            },
+                        )
+                    }
+                }
             },
             floatingActionButton = {
                 if (showScrollToTop) {
