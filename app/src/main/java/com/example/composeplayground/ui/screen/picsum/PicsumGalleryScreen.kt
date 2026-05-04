@@ -113,6 +113,14 @@ fun PicsumGalleryScreen(
         }
     }
 
+    LaunchedEffect(uiState.sortMode) {
+        when (uiState.viewMode) {
+            PicsumViewMode.Grid -> gridState.scrollToItem(0)
+            PicsumViewMode.List -> listState.scrollToItem(0)
+            PicsumViewMode.StaggeredGrid -> staggeredState.scrollToItem(0)
+        }
+    }
+
     PicsumTheme {
         Scaffold(
             modifier = modifier,
