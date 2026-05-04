@@ -67,14 +67,15 @@ class PokemonRepositoryImpl(
     }
 
     companion object {
+        private const val BASE_SPRITE_URL = "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon"
+        private const val BASE_ARTWORK_URL = "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork"
+
         fun extractIdFromUrl(url: String): Int =
             url.trimEnd('/').substringAfterLast('/').toInt()
 
-        fun spriteUrl(id: Int): String =
-            "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/$id.png"
+        fun spriteUrl(id: Int): String = "$BASE_SPRITE_URL/$id.png"
 
-        fun artworkUrl(id: Int): String =
-            "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/$id.png"
+        fun artworkUrl(id: Int): String = "$BASE_ARTWORK_URL/$id.png"
     }
 }
 

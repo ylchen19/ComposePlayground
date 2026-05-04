@@ -42,16 +42,16 @@ class PokemonListViewModel(
 
     // 搜尋加 debounce、型別切換即時生效，兩者皆直接從 uiState 衍生，消除重複 source of truth
     val pokemonPagingFlow: Flow<PagingData<Pokemon>> = combine(
-        uiState.map { it.searchQuery }.distinctUntilChanged().debounce(300),
+        uiState.map { it.searchQuery }.distinctUntilChanged().debounce(SEARCH_DEBOUNCE_MS),
         uiState.map { it.selectedType }.distinctUntilChanged(),
     ) { query, type ->
         query to type
     }.flatMapLatest { (query, type) ->
         Pager(
             config = PagingConfig(
-                pageSize = 20,
-                prefetchDistance = 10,
-                initialLoadSize = 40,
+                pageSize = PAGE_SIZE,
+                prefetchDistance = PREFETCH_DISTANCE,
+                initialLoadSize = INITIAL_LOAD_SIZE,
                 enablePlaceholders = false,
             ),
         ) {
@@ -62,12 +62,6 @@ class PokemonListViewModel(
             }
         }.flow
     }.cachedIn(viewModelScope)
-
-    val availableTypes: List<String> = listOf(
-        "normal", "fire", "water", "electric", "grass", "ice",
-        "fighting", "poison", "ground", "flying", "psychic", "bug",
-        "rock", "ghost", "dragon", "dark", "steel", "fairy",
-    )
 
     fun toggleViewMode() {
         uiState.update {
@@ -81,5 +75,18 @@ class PokemonListViewModel(
 
     fun selectType(type: String?) {
         uiState.update { it.copy(selectedType = type) }
+    }
+
+    companion object {
+        private const val SEARCH_DEBOUNCE_MS = 300L
+        private const val PAGE_SIZE = 20
+        private const val PREFETCH_DISTANCE = 10
+        private const val INITIAL_LOAD_SIZE = 40
+
+        val AVAILABLE_TYPES: List<String> = listOf(
+            "normal", "fire", "water", "electric", "grass", "ice",
+            "fighting", "poison", "ground", "flying", "psychic", "bug",
+            "rock", "ghost", "dragon", "dark", "steel", "fairy",
+        )
     }
 }

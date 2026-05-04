@@ -40,12 +40,18 @@ data class PicsumPhoto(
 ) {
     val pixelCount: Long get() = originalWidth.toLong() * originalHeight.toLong()
 
-    fun thumbnailUrl(size: Int = 1080) = "https://picsum.photos/id/$id/$size/$size"
-    fun scaledUrl(maxWidth: Int = 600): String {
+    fun thumbnailUrl(size: Int = DEFAULT_THUMBNAIL_SIZE) = "$BASE_URL/$id/$size/$size"
+    fun scaledUrl(maxWidth: Int = DEFAULT_SCALED_WIDTH): String {
         val scaledHeight = (maxWidth.toFloat() / originalWidth * originalHeight).toInt()
-        return "https://picsum.photos/id/$id/$maxWidth/$scaledHeight"
+        return "$BASE_URL/$id/$maxWidth/$scaledHeight"
     }
-    fun fullSizeUrl() = "https://picsum.photos/id/$id/$originalWidth/$originalHeight"
+    fun fullSizeUrl() = "$BASE_URL/$id/$originalWidth/$originalHeight"
+
+    companion object {
+        const val DEFAULT_THUMBNAIL_SIZE = 1080
+        const val DEFAULT_SCALED_WIDTH = 600
+        private const val BASE_URL = "https://picsum.photos/id"
+    }
 }
 
 fun PicsumPhotoDto.toDomain(): PicsumPhoto = PicsumPhoto(

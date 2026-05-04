@@ -149,9 +149,9 @@ fun PokemonListScreen(
                 onQueryChange = viewModel::updateSearchQuery,
             )
             PokemonTypeFilterRow(
-                availableTypes = viewModel.availableTypes,
-                selectedType = uiState.selectedType,
-                onSelectType = viewModel::selectType,
+               availableTypes = PokemonListViewModel.AVAILABLE_TYPES,
+               selectedType = uiState.selectedType,
+               onSelectType = viewModel::selectType,
             )
             Spacer(modifier = Modifier.height(8.dp))
             PokemonPagingContent(

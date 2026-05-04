@@ -19,14 +19,8 @@ data class PokemonTypeSection(
 
 @Immutable
 data class PokemonTypeGalleryUiState(
-    val sections: List<PokemonTypeSection> = ALL_POKEMON_TYPES.map { PokemonTypeSection(it) },
+    val sections: List<PokemonTypeSection> = PokemonTypeGalleryViewModel.ALL_POKEMON_TYPES.map { PokemonTypeSection(it) },
     val error: String? = null,
-)
-
-internal val ALL_POKEMON_TYPES = listOf(
-    "normal", "fire", "water", "electric", "grass", "ice",
-    "fighting", "poison", "ground", "flying", "psychic", "bug",
-    "rock", "ghost", "dragon", "dark", "steel", "fairy",
 )
 
 class PokemonTypeGalleryViewModel(
@@ -79,5 +73,10 @@ class PokemonTypeGalleryViewModel(
 
     companion object {
         const val PAGE_SIZE = 20
+        val ALL_POKEMON_TYPES = listOf(
+            "normal", "fire", "water", "electric", "grass", "ice",
+            "fighting", "poison", "ground", "flying", "psychic", "bug",
+            "rock", "ghost", "dragon", "dark", "steel", "fairy",
+        )
     }
 }
