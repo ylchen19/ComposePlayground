@@ -1,6 +1,6 @@
 package com.example.composeplayground.di
 
-import com.example.composeplayground.data.analyzer.MLKitPicsumImageAnalyzer
+import com.example.composeplayground.data.analyzer.GeminiNanoPicsumImageAnalyzer
 import com.example.composeplayground.data.analyzer.PicsumImageAnalyzer
 import com.example.composeplayground.data.repository.PicsumRepository
 import com.example.composeplayground.data.repository.PicsumRepositoryImpl
@@ -19,11 +19,13 @@ import org.koin.dsl.module
  *
  * [PicsumDetailViewModel] 的建構參數透過導航層的 `parametersOf(id, author, w, h)` 注入。
  *
- * [PicsumImageAnalyzer] 為 singleton——其內部 LruCache 跨頁面有效，重複進同一張詳細頁可秒出摘要。
+ * [PicsumImageAnalyzer] 為 singleton（[GeminiNanoPicsumImageAnalyzer]）——
+ * 優先使用 Gemini Nano on-device 多模態（Pixel 9+ 才支援），
+ * 不支援時自動降級為 ML Kit 標籤句子；內部 LruCache 跨頁面有效，重複進同一張詳細頁可秒出描述。
  */
 val picsumModule = module {
     single<PicsumRepository> { PicsumRepositoryImpl(get(named("picsumApi"))) }
-    single<PicsumImageAnalyzer> { MLKitPicsumImageAnalyzer(appContext = androidContext()) }
+    single<PicsumImageAnalyzer> { GeminiNanoPicsumImageAnalyzer(appContext = androidContext()) }
 
     viewModel { PicsumGalleryViewModel(get()) }
     viewModel { params ->

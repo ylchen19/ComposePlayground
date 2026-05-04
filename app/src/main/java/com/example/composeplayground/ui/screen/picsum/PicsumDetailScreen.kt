@@ -122,9 +122,8 @@ private fun SummarySection(state: ImageSummaryState) {
         }
         is ImageSummaryState.Success -> {
             Spacer(modifier = Modifier.height(4.dp))
-            val text = if (state.labels.isEmpty()) "無相關標籤" else state.labels.joinToString("、")
             Text(
-                text = "摘要：$text",
+                text = state.description,
                 style = MaterialTheme.typography.bodyMedium,
                 color = Color.White,
             )

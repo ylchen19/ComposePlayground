@@ -1,14 +1,16 @@
 package com.example.composeplayground.data.analyzer
 
 /**
- * 對 Picsum 圖片做內容摘要分析。實作層自行決定如何取得圖像（如 Coil + 縮圖）
- * 與如何產生 label，ViewModel 只認此契約。
+ * 對 Picsum 圖片產生一句話的自然語言描述。
+ *
+ * 實作策略（優先到 fallback）：
+ * 1. Gemini Nano on-device (Pixel 9+ 支援多模態，需下載約 2 GB 模型)
+ * 2. ML Kit Image Labeling + 中文句子模板（所有裝置均支援，即時可用）
  */
 interface PicsumImageAnalyzer {
     /**
-     * @param photoId 用作 cache key
-     * @param imageUrl 通常傳 [com.example.composeplayground.data.model.PicsumPhoto.thumbnailUrl]
-     *                 的小尺寸版本即可，模型不需要原圖解析度
+     * @param photoId 做 cache key，相同 photoId 不重複分析
+     * @param imageUrl 縮圖 URL（呼叫端決定大小，建議 ≤ 384 px）
      */
-    suspend fun summarize(photoId: String, imageUrl: String): Result<List<String>>
+    suspend fun summarize(photoId: String, imageUrl: String): Result<String>
 }

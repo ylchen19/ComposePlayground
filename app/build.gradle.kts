@@ -67,6 +67,7 @@ dependencies {
     implementation(libs.paging.runtime)
     implementation(libs.paging.compose)
     implementation(libs.mlkit.image.labeling)
+    implementation(libs.mlkit.genai.prompt)
     testImplementation(libs.junit)
     testImplementation(libs.kotlinx.coroutines.test)
     testImplementation(libs.paging.testing)
