@@ -3,11 +3,17 @@ package com.example.composeplayground.ui.screen.picsum
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -17,11 +23,13 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.composeplayground.ui.screen.picsum.components.ZoomableAsyncImage
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -31,7 +39,9 @@ fun PicsumDetailScreen(
     onBack: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val photo = viewModel.photo
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val photo = uiState.photo
+
     Scaffold(
         modifier = modifier,
         topBar = {
@@ -84,7 +94,48 @@ fun PicsumDetailScreen(
                     style = MaterialTheme.typography.bodyMedium,
                     color = Color.White,
                 )
+                SummarySection(state = uiState.summary)
             }
+        }
+    }
+}
+
+@Composable
+private fun SummarySection(state: ImageSummaryState) {
+    when (state) {
+        ImageSummaryState.Idle -> Unit
+        ImageSummaryState.Loading -> {
+            Spacer(modifier = Modifier.height(4.dp))
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                CircularProgressIndicator(
+                    modifier = Modifier.size(14.dp),
+                    strokeWidth = 2.dp,
+                    color = Color.White,
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+                Text(
+                    text = "分析中…",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = Color.White,
+                )
+            }
+        }
+        is ImageSummaryState.Success -> {
+            Spacer(modifier = Modifier.height(4.dp))
+            val text = if (state.labels.isEmpty()) "無相關標籤" else state.labels.joinToString("、")
+            Text(
+                text = "摘要：$text",
+                style = MaterialTheme.typography.bodyMedium,
+                color = Color.White,
+            )
+        }
+        is ImageSummaryState.Error -> {
+            Spacer(modifier = Modifier.height(4.dp))
+            Text(
+                text = "分析失敗：${state.message}",
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.error,
+            )
         }
     }
 }

@@ -5,11 +5,7 @@ plugins {
 
 android {
     namespace = "com.example.composeplayground.core.navigation"
-    compileSdk {
-        version = release(36) {
-            minorApiLevel = 1
-        }
-    }
+    compileSdk = 37
 
     defaultConfig {
         minSdk = 29
