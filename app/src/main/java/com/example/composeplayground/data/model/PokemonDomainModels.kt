@@ -48,3 +48,10 @@ data class PokemonPage(
     val pokemon: List<Pokemon>,
     val hasNext: Boolean,
 )
+
+@Immutable
+data class EvolutionNode(
+    val id: Int,
+    val name: String,
+    val imageUrl: String,
+)

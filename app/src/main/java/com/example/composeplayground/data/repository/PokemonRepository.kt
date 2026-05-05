@@ -1,5 +1,6 @@
 package com.example.composeplayground.data.repository
 
+import com.example.composeplayground.data.model.EvolutionNode
 import com.example.composeplayground.data.model.Pokemon
 import com.example.composeplayground.data.model.PokemonDetail
 import com.example.composeplayground.data.model.PokemonPage
@@ -10,4 +11,5 @@ interface PokemonRepository {
     suspend fun fetchPokemonDetail(id: Int): PokemonDetail
     suspend fun fetchPokemonByType(typeName: String): List<Pokemon>
     suspend fun fetchAllPokemonNames(): List<Pokemon>
+    suspend fun fetchEvolutionChain(pokemonId: Int): List<EvolutionNode>
 }

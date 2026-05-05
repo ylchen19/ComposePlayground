@@ -7,6 +7,8 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.slideInVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -24,10 +26,12 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -59,6 +63,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil3.compose.AsyncImage
+import com.example.composeplayground.data.model.EvolutionNode
 import com.example.composeplayground.data.model.PokemonDetail
 import com.example.composeplayground.data.model.PokemonStatInfo
 import com.example.composeplayground.ui.screen.pokemon.components.PokemonTypeLabel
@@ -73,6 +78,7 @@ import java.util.Locale
 fun PokemonDetailScreen(
     viewModel: PokemonDetailViewModel,
     onBack: () -> Unit,
+    onNavigateToPokemon: (Int) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -94,6 +100,8 @@ fun PokemonDetailScreen(
             )
             is PokemonDetailUiState.Success -> PokemonDetailContent(
                 pokemon = state.pokemon,
+                evolutionChain = state.evolutionChain,
+                onNavigateToPokemon = onNavigateToPokemon,
                 modifier = Modifier.fillMaxSize().padding(innerPadding),
             )
         }
@@ -167,6 +175,8 @@ private fun DetailErrorContent(
 @Composable
 private fun PokemonDetailContent(
     pokemon: PokemonDetail,
+    evolutionChain: List<EvolutionNode>,
+    onNavigateToPokemon: (Int) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val primaryTypeColor = pokemonTypeColors[pokemon.types.firstOrNull()] ?: Color.Gray
@@ -211,7 +221,89 @@ private fun PokemonDetailContent(
                 primaryTypeColor = primaryTypeColor,
             )
         }
+        
+        if (evolutionChain.isNotEmpty()) {
+            item {
+                Spacer(modifier = Modifier.height(24.dp))
+                SectionHeader(title = "Evolution Chain", typeColor = primaryTypeColor)
+                Spacer(modifier = Modifier.height(16.dp))
+                EvolutionChainSection(
+                    chain = evolutionChain,
+                    primaryTypeColor = primaryTypeColor,
+                    onNodeClick = onNavigateToPokemon,
+                    modifier = Modifier.padding(horizontal = 16.dp)
+                )
+            }
+        }
+        
         item { Spacer(modifier = Modifier.height(32.dp)) }
+    }
+}
+
+@Composable
+private fun EvolutionChainSection(
+    chain: List<EvolutionNode>,
+    primaryTypeColor: Color,
+    onNodeClick: (Int) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val scrollState = rememberScrollState()
+    Row(
+        modifier = modifier
+            .fillMaxWidth()
+            .horizontalScroll(scrollState),
+        horizontalArrangement = Arrangement.spacedBy(16.dp, Alignment.CenterHorizontally),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        chain.forEachIndexed { index, node ->
+            EvolutionNodeItem(node = node, primaryTypeColor = primaryTypeColor, onClick = { onNodeClick(node.id) })
+            if (index < chain.size - 1) {
+                Icon(
+                    imageVector = Icons.AutoMirrored.Filled.ArrowForward,
+                    contentDescription = null,
+                    tint = primaryTypeColor.copy(alpha = 0.5f),
+                    modifier = Modifier.size(24.dp)
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun EvolutionNodeItem(
+    node: EvolutionNode,
+    primaryTypeColor: Color,
+    onClick: () -> Unit,
+) {
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        modifier = Modifier
+            .width(100.dp)
+            .clickable(onClick = onClick)
+    ) {
+        Box(
+            modifier = Modifier
+                .size(80.dp)
+                .clip(CircleShape)
+                .background(primaryTypeColor.copy(alpha = 0.1f))
+                .padding(8.dp),
+            contentAlignment = Alignment.Center
+        ) {
+            AsyncImage(
+                model = node.imageUrl,
+                contentDescription = node.name,
+                modifier = Modifier.fillMaxSize(),
+                contentScale = ContentScale.Fit
+            )
+        }
+        Spacer(modifier = Modifier.height(8.dp))
+        Text(
+            text = node.name.replaceFirstChar { it.titlecase(Locale.ROOT) },
+            style = MaterialTheme.typography.bodyMedium,
+            fontWeight = FontWeight.SemiBold,
+            textAlign = TextAlign.Center,
+            maxLines = 1
+        )
     }
 }
 

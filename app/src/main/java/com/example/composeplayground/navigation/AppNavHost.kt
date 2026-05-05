@@ -101,6 +101,7 @@ fun AppNavHost(modifier: Modifier = Modifier) {
                 PokemonDetailScreen(
                     viewModel = viewModel,
                     onBack = { navigate { backStack.removeLastOrNull() } },
+                    onNavigateToPokemon = { id -> navigate { backStack.add(PokemonDetail(id)) } },
                 )
             }
             entry<Settings> {

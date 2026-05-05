@@ -47,6 +47,24 @@ class PokemonRepositoryImpl(
         }
     }
 
+    override suspend fun fetchEvolutionChain(pokemonId: Int): List<EvolutionNode> {
+        val speciesResponse = apiService.get<PokemonSpeciesResponse>("pokemon-species/$pokemonId").getOrThrow()
+        val chainId = extractIdFromUrl(speciesResponse.evolutionChain.url)
+        val chainResponse = apiService.get<EvolutionChainResponse>("evolution-chain/$chainId").getOrThrow()
+
+        val result = mutableListOf<EvolutionNode>()
+        fun traverse(link: ChainLink) {
+            val id = extractIdFromUrl(link.species.url)
+            result.add(EvolutionNode(id = id, name = link.species.name, imageUrl = artworkUrl(id)))
+            // Branching chains (e.g. Eevee → 8 Eeveelutions) are flattened by DFS;
+            // the horizontal scroll row handles the overflow acceptably.
+            link.evolvesTo.forEach { traverse(it) }
+        }
+        traverse(chainResponse.chain)
+
+        return result
+    }
+
     private fun PokemonDetailResponse.toDomain(): PokemonDetail {
         return PokemonDetail(
             id = id,

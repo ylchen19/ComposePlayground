@@ -86,3 +86,27 @@ data class TypePokemonEntry(
     val pokemon: NamedApiResource,
     val slot: Int,
 )
+
+// GET /pokemon-species/{id}
+@Serializable
+data class PokemonSpeciesResponse(
+    @SerialName("evolution_chain") val evolutionChain: EvolutionChainUrl,
+)
+
+@Serializable
+data class EvolutionChainUrl(
+    val url: String,
+)
+
+// GET /evolution-chain/{id}
+@Serializable
+data class EvolutionChainResponse(
+    val chain: ChainLink,
+)
+
+@Serializable
+data class ChainLink(
+    val species: NamedApiResource,
+    @SerialName("evolves_to") val evolvesTo: List<ChainLink>,
+)
+
