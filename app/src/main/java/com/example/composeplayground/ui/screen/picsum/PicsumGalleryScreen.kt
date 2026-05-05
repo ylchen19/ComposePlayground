@@ -70,11 +70,13 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.paging.LoadState
 import androidx.paging.compose.LazyPagingItems
 import androidx.paging.compose.collectAsLazyPagingItems
+import com.example.composeplayground.R
 import com.example.composeplayground.data.model.PicsumPhoto
 import com.example.composeplayground.ui.screen.picsum.components.PicsumGridCard
 import com.example.composeplayground.ui.screen.picsum.components.PicsumListCard
@@ -137,7 +139,7 @@ fun PicsumGalleryScreen(
                                 androidx.compose.material3.TextField(
                                     value = uiState.searchQuery,
                                     onValueChange = viewModel::updateSearchQuery,
-                                    placeholder = { Text("搜尋作者...") },
+                                    placeholder = { Text(stringResource(R.string.search_author)) },
                                     singleLine = true,
                                     modifier = Modifier.fillMaxWidth(),
                                     colors = androidx.compose.material3.TextFieldDefaults.colors(
@@ -182,7 +184,7 @@ fun PicsumGalleryScreen(
                         }
                     } else {
                         TopAppBar(
-                            title = { Text("Picsum 圖庫") },
+                            title = { Text(stringResource(R.string.picsum_gallery)) },
                             navigationIcon = {
                                 IconButton(onClick = onBack) {
                                     Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "返回")
@@ -460,7 +462,7 @@ private fun AppendErrorItem(onRetry: () -> Unit) {
         Button(onClick = onRetry) {
             Icon(Icons.Default.Refresh, contentDescription = null)
             Spacer(Modifier.width(8.dp))
-            Text("重試")
+            Text(stringResource(R.string.retry))
         }
     }
 }
@@ -484,7 +486,7 @@ private fun PicsumErrorContent(
             Button(onClick = onRetry) {
                 Icon(Icons.Default.Refresh, contentDescription = null)
                 Spacer(Modifier.width(8.dp))
-                Text("重試")
+                Text(stringResource(R.string.retry))
             }
         }
     }

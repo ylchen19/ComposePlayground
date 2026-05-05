@@ -21,11 +21,13 @@ import org.koin.dsl.module
  * koinViewModel<PokemonDetailViewModel>(parameters = { parametersOf(pokemonId) })
  * ```
  */
+import org.koin.android.ext.koin.androidContext
+
 val pokemonModule = module {
 
     // ── 資料層 ────────────────────────────────────────────────────────────────
     // get() 解析為 networkModule 提供的 ApiService（KtorApiService）
-    single<PokemonRepository> { PokemonRepositoryImpl(get()) }
+    single<PokemonRepository> { PokemonRepositoryImpl(get(), androidContext()) }
 
     // ── ViewModel ─────────────────────────────────────────────────────────────
     viewModel { PokemonListViewModel(get()) }

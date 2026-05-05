@@ -58,11 +58,13 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil3.compose.AsyncImage
+import com.example.composeplayground.R
 import com.example.composeplayground.data.model.EvolutionNode
 import com.example.composeplayground.data.model.PokemonDetail
 import com.example.composeplayground.data.model.PokemonStatInfo
@@ -124,13 +126,13 @@ private fun PokemonDetailTopBar(
     val title = when (uiState) {
         is PokemonDetailUiState.Success ->
             uiState.pokemon.name.replaceFirstChar { it.titlecase(Locale.ROOT) }
-        else -> "Pokémon Detail"
+        else -> stringResource(R.string.pokemon_detail)
     }
     TopAppBar(
         title = { Text(title, fontWeight = FontWeight.Bold, color = Color.White) },
         navigationIcon = {
             IconButton(onClick = onBack) {
-                Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back", tint = Color.White)
+                Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.back), tint = Color.White)
             }
         },
         colors = TopAppBarDefaults.topAppBarColors(containerColor = topBarColor),
@@ -165,7 +167,7 @@ private fun DetailErrorContent(
             ) {
                 Icon(Icons.Default.Refresh, contentDescription = null)
                 Spacer(modifier = Modifier.width(8.dp))
-                Text("Retry")
+                Text(stringResource(R.string.retry))
             }
         }
     }
@@ -193,9 +195,20 @@ private fun PokemonDetailContent(
     ) {
         item { PokemonHeroImage(pokemon = pokemon, primaryTypeColor = primaryTypeColor) }
         item { PokemonNameHeader(pokemon = pokemon) }
+        item {
+            Text(
+                text = pokemon.flavorText,
+                style = MaterialTheme.typography.bodyLarge,
+                textAlign = TextAlign.Center,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 24.dp, vertical = 8.dp),
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
         item { PokemonTypeRow(types = pokemon.types) }
         item { PokemonInfoCards(pokemon = pokemon, primaryTypeColor = primaryTypeColor) }
-        item { SectionHeader(title = "Base Stats", typeColor = primaryTypeColor) }
+        item { SectionHeader(title = stringResource(R.string.base_stats), typeColor = primaryTypeColor) }
         items(pokemon.stats) { stat ->
             AnimatedVisibility(
                 visible = animateStats,
@@ -211,7 +224,7 @@ private fun PokemonDetailContent(
         }
         item {
             Spacer(modifier = Modifier.height(24.dp))
-            SectionHeader(title = "Abilities", typeColor = primaryTypeColor)
+            SectionHeader(title = stringResource(R.string.abilities), typeColor = primaryTypeColor)
             Spacer(modifier = Modifier.height(8.dp))
         }
         items(pokemon.abilities) { ability ->
@@ -225,7 +238,7 @@ private fun PokemonDetailContent(
         if (evolutionChain.isNotEmpty()) {
             item {
                 Spacer(modifier = Modifier.height(24.dp))
-                SectionHeader(title = "Evolution Chain", typeColor = primaryTypeColor)
+                SectionHeader(title = stringResource(R.string.evolution_chain), typeColor = primaryTypeColor)
                 Spacer(modifier = Modifier.height(16.dp))
                 EvolutionChainSection(
                     chain = evolutionChain,
@@ -389,9 +402,9 @@ private fun PokemonInfoCards(
         modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
         horizontalArrangement = Arrangement.spacedBy(12.dp),
     ) {
-        InfoCard(title = "Height", value = "${pokemon.height / 10.0} m", typeColor = primaryTypeColor, modifier = Modifier.weight(1f))
-        InfoCard(title = "Weight", value = "${pokemon.weight / 10.0} kg", typeColor = primaryTypeColor, modifier = Modifier.weight(1f))
-        InfoCard(title = "ID", value = "#${pokemon.id}", typeColor = primaryTypeColor, modifier = Modifier.weight(1f))
+        InfoCard(title = stringResource(R.string.height), value = "${pokemon.height / 10.0} m", typeColor = primaryTypeColor, modifier = Modifier.weight(1f))
+        InfoCard(title = stringResource(R.string.weight), value = "${pokemon.weight / 10.0} kg", typeColor = primaryTypeColor, modifier = Modifier.weight(1f))
+        InfoCard(title = stringResource(R.string.id), value = "#${pokemon.id}", typeColor = primaryTypeColor, modifier = Modifier.weight(1f))
     }
     Spacer(modifier = Modifier.height(24.dp))
 }
@@ -419,7 +432,7 @@ private fun AbilityCard(
             )
             if (isHidden) {
                 Text(
-                    text = "Hidden",
+                    text = stringResource(R.string.hidden),
                     style = MaterialTheme.typography.labelSmall,
                     color = primaryTypeColor,
                     fontWeight = FontWeight.Bold,
@@ -508,12 +521,12 @@ private fun StatBar(
         else -> Color(0xFFF44336)
     }
     val statLabel = when (stat.name) {
-        "hp" -> "HP"
-        "attack" -> "ATK"
-        "defense" -> "DEF"
-        "special-attack" -> "SpATK"
-        "special-defense" -> "SpDEF"
-        "speed" -> "SPD"
+        "hp" -> stringResource(R.string.stat_hp)
+        "attack" -> stringResource(R.string.stat_atk)
+        "defense" -> stringResource(R.string.stat_def)
+        "special-attack" -> stringResource(R.string.stat_sp_atk)
+        "special-defense" -> stringResource(R.string.stat_sp_def)
+        "speed" -> stringResource(R.string.stat_spd)
         else -> stat.name.uppercase(Locale.ROOT)
     }
     Row(

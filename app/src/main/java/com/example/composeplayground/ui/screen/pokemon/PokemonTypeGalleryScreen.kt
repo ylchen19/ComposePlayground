@@ -67,7 +67,7 @@ fun PokemonTypeGalleryScreen(
             TopAppBar(
                 title = {
                     Text(
-                        text = "類型圖鑑",
+                        text = androidx.compose.ui.res.stringResource(com.example.composeplayground.R.string.type_gallery),
                         fontWeight = FontWeight.Bold,
                         color = PokemonYellow,
                     )
@@ -76,7 +76,7 @@ fun PokemonTypeGalleryScreen(
                     IconButton(onClick = onBack) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "返回",
+                            contentDescription = androidx.compose.ui.res.stringResource(com.example.composeplayground.R.string.back),
                             tint = Color.White,
                         )
                     }
@@ -150,7 +150,7 @@ private fun PokemonTypeSectionRow(
             Spacer(modifier = Modifier.weight(1f))
             if (!section.isLoading) {
                 Text(
-                    text = "${section.pokemon.size} 隻",
+                    text = androidx.compose.ui.res.stringResource(com.example.composeplayground.R.string.pokemon_count, section.pokemon.size),
                     style = MaterialTheme.typography.labelMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
@@ -175,7 +175,7 @@ private fun PokemonTypeSectionRow(
                 contentAlignment = Alignment.Center,
             ) {
                 Text(
-                    text = "暫無資料",
+                    text = androidx.compose.ui.res.stringResource(com.example.composeplayground.R.string.no_data),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )

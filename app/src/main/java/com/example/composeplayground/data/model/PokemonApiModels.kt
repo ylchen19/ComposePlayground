@@ -86,11 +86,27 @@ data class TypePokemonEntry(
     val pokemon: NamedApiResource,
     val slot: Int,
 )
-
 // GET /pokemon-species/{id}
 @Serializable
 data class PokemonSpeciesResponse(
+    val id: Int,
+    val name: String,
+    val names: List<ApiName>,
+    @SerialName("flavor_text_entries") val flavorTextEntries: List<FlavorTextEntry>,
     @SerialName("evolution_chain") val evolutionChain: EvolutionChainUrl,
+)
+
+@Serializable
+data class ApiName(
+    val name: String,
+    val language: NamedApiResource,
+)
+
+@Serializable
+data class FlavorTextEntry(
+    @SerialName("flavor_text") val flavorText: String,
+    val language: NamedApiResource,
+    val version: NamedApiResource,
 )
 
 @Serializable

@@ -58,6 +58,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -66,6 +69,7 @@ import androidx.paging.compose.LazyPagingItems
 import androidx.paging.compose.collectAsLazyPagingItems
 import coil3.imageLoader
 import coil3.request.ImageRequest
+import com.example.composeplayground.R
 import com.example.composeplayground.data.model.Pokemon
 import com.example.composeplayground.ui.screen.pokemon.components.PokemonGridCard
 import com.example.composeplayground.ui.screen.pokemon.components.PokemonListItem
@@ -132,7 +136,7 @@ fun PokemonListScreen(
                 ) {
                     Icon(
                         imageVector = Icons.Default.KeyboardArrowUp,
-                        contentDescription = "Scroll to top",
+                        contentDescription = stringResource(R.string.scroll_to_top),
                         tint = Color.White,
                     )
                 }
@@ -178,24 +182,24 @@ private fun PokemonListTopBar(
     TopAppBar(
         title = {
             Text(
-                text = "Pokédex",
+                text = stringResource(R.string.pokedex_title),
                 fontWeight = FontWeight.Bold,
                 color = PokemonYellow,
             )
         },
         actions = {
             IconButton(onClick = onNavigateToTypeGallery) {
-                Icon(Icons.Default.Category, contentDescription = "類型圖鑑", tint = Color.White)
+                Icon(Icons.Default.Category, contentDescription = stringResource(R.string.type_gallery), tint = Color.White)
             }
             IconButton(onClick = onToggleViewMode) {
                 if (viewMode == ViewMode.Grid) {
-                    Icon(Icons.AutoMirrored.Filled.List, contentDescription = "Switch to list", tint = Color.White)
+                    Icon(Icons.AutoMirrored.Filled.List, contentDescription = stringResource(R.string.switch_to_list), tint = Color.White)
                 } else {
-                    GridViewIcon(color = Color.White)
+                    GridViewIcon(color = Color.White, contentDescription = stringResource(R.string.switch_to_grid))
                 }
             }
             IconButton(onClick = onNavigateToSettings) {
-                Icon(Icons.Default.Settings, contentDescription = "Settings", tint = Color.White)
+                Icon(Icons.Default.Settings, contentDescription = stringResource(R.string.settings), tint = Color.White)
             }
         },
         colors = TopAppBarDefaults.topAppBarColors(containerColor = PokemonRed),
@@ -213,14 +217,14 @@ private fun PokemonSearchBar(
         modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = 16.dp, vertical = 8.dp),
-        placeholder = { Text("Search Pokémon...") },
+        placeholder = { Text(stringResource(R.string.search_pokemon)) },
         leadingIcon = {
-            Icon(Icons.Default.Search, contentDescription = "Search", tint = PokemonRed)
+            Icon(Icons.Default.Search, contentDescription = stringResource(R.string.search), tint = PokemonRed)
         },
         trailingIcon = {
             if (query.isNotEmpty()) {
                 IconButton(onClick = { onQueryChange("") }) {
-                    Icon(Icons.Default.Clear, contentDescription = "Clear")
+                    Icon(Icons.Default.Clear, contentDescription = stringResource(R.string.clear))
                 }
             }
         },
@@ -249,7 +253,7 @@ private fun PokemonTypeFilterRow(
         // contentType groups structurally identical composables for slot recycling.
         item(key = "all", contentType = "filter_chip") {
             PokemonTypeFilterChip(
-                typeName = "All",
+                typeName = stringResource(R.string.all),
                 isSelected = selectedType == null,
                 onClick = { onSelectType(null) },
             )
@@ -288,7 +292,7 @@ private fun PokemonPagingContent(
             pagingItems.loadState.refresh is LoadState.Error -> {
                 val error = (pagingItems.loadState.refresh as LoadState.Error).error
                 PokemonErrorContent(
-                    message = error.localizedMessage ?: "An error occurred",
+                    message = error.localizedMessage ?: stringResource(R.string.error_occurred),
                     onRetry = pagingItems::retry,
                 )
             }
@@ -341,7 +345,7 @@ private fun PokemonErrorContent(
             ) {
                 Icon(Icons.Default.Refresh, contentDescription = null)
                 Spacer(modifier = Modifier.width(8.dp))
-                Text("Retry")
+                Text(stringResource(R.string.retry))
             }
         }
     }
@@ -462,8 +466,16 @@ private fun PokemonList(
 }
 
 @Composable
-private fun GridViewIcon(color: Color = MaterialTheme.colorScheme.onSurface) {
-    Row(horizontalArrangement = Arrangement.spacedBy(3.dp)) {
+private fun GridViewIcon(
+    color: Color = MaterialTheme.colorScheme.onSurface,
+    contentDescription: String? = null,
+) {
+    Row(
+        horizontalArrangement = Arrangement.spacedBy(3.dp),
+        modifier = if (contentDescription != null) Modifier.semantics {
+            this.contentDescription = contentDescription
+        } else Modifier
+    ) {
         Column(verticalArrangement = Arrangement.spacedBy(3.dp)) {
             Box(modifier = Modifier.size(8.dp).background(color, MaterialTheme.shapes.extraSmall))
             Box(modifier = Modifier.size(8.dp).background(color, MaterialTheme.shapes.extraSmall))

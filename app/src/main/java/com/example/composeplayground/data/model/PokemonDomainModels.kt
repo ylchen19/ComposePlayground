@@ -23,6 +23,7 @@ data class PokemonDetail(
     val types: List<String>,
     val abilities: List<PokemonAbility>,
     val stats: List<PokemonStatInfo>,
+    val flavorText: String = "",
 )
 
 @Immutable

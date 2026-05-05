@@ -1,13 +1,34 @@
 package com.example.composeplayground.data.repository
 
+import android.content.Context
 import com.example.composeplayground.data.model.*
 import com.example.composeplayground.network.NetworkResult
 import com.example.composeplayground.network.api.ApiService
 import com.example.composeplayground.network.api.get
+import kotlinx.coroutines.async
+import kotlinx.coroutines.coroutineScope
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.jsonObject
+import kotlinx.serialization.json.jsonPrimitive
 
 class PokemonRepositoryImpl(
     private val apiService: ApiService,
+    private val context: Context,
 ) : PokemonRepository {
+
+    private val nameMapping: Map<String, String> by lazy {
+        loadPokemonNames()
+    }
+
+    private fun loadPokemonNames(): Map<String, String> {
+        return try {
+            val jsonString = context.assets.open("pokemon_names_zh_hant.json").bufferedReader().use { it.readText() }
+            val jsonObject = Json.parseToJsonElement(jsonString).jsonObject
+            jsonObject.mapValues { it.value.jsonPrimitive.content }
+        } catch (e: Exception) {
+            emptyMap()
+        }
+    }
 
     override suspend fun fetchPokemonList(offset: Int, limit: Int): PokemonPage {
         val response = apiService.get<PokemonListResponse>(
@@ -17,22 +38,29 @@ class PokemonRepositoryImpl(
         return PokemonPage(
             pokemon = response.results.map { item ->
                 val id = extractIdFromUrl(item.url)
-                Pokemon(id = id, name = item.name, imageUrl = spriteUrl(id), types = emptyList())
+                val localizedName = nameMapping[id.toString()] ?: item.name
+                Pokemon(id = id, name = localizedName, imageUrl = spriteUrl(id), types = emptyList())
             },
             hasNext = response.next != null,
         )
     }
 
-    override suspend fun fetchPokemonDetail(id: Int): PokemonDetail {
-        val response = apiService.get<PokemonDetailResponse>("pokemon/$id").getOrThrow()
-        return response.toDomain()
+    override suspend fun fetchPokemonDetail(id: Int): PokemonDetail = coroutineScope {
+        val detailDeferred = async { apiService.get<PokemonDetailResponse>("pokemon/$id").getOrThrow() }
+        val speciesDeferred = async { apiService.get<PokemonSpeciesResponse>("pokemon-species/$id").getOrThrow() }
+
+        val detailResponse = detailDeferred.await()
+        val speciesResponse = speciesDeferred.await()
+
+        detailResponse.toDomain(speciesResponse)
     }
 
     override suspend fun fetchPokemonByType(typeName: String): List<Pokemon> {
         val response = apiService.get<PokemonTypeResponse>("type/$typeName").getOrThrow()
         return response.pokemon.map { entry ->
             val id = extractIdFromUrl(entry.pokemon.url)
-            Pokemon(id = id, name = entry.pokemon.name, imageUrl = spriteUrl(id), types = listOf(typeName))
+            val localizedName = nameMapping[id.toString()] ?: entry.pokemon.name
+            Pokemon(id = id, name = localizedName, imageUrl = spriteUrl(id), types = listOf(typeName))
         }.sortedBy { it.id }
     }
 
@@ -43,32 +71,34 @@ class PokemonRepositoryImpl(
         ).getOrThrow()
         return response.results.map { item ->
             val id = extractIdFromUrl(item.url)
-            Pokemon(id = id, name = item.name, imageUrl = spriteUrl(id), types = emptyList())
+            val localizedName = nameMapping[id.toString()] ?: item.name
+            Pokemon(id = id, name = localizedName, imageUrl = spriteUrl(id), types = emptyList())
         }
     }
 
-    override suspend fun fetchEvolutionChain(pokemonId: Int): List<EvolutionNode> {
+    override suspend fun fetchEvolutionChain(pokemonId: Int): List<EvolutionNode> = coroutineScope {
         val speciesResponse = apiService.get<PokemonSpeciesResponse>("pokemon-species/$pokemonId").getOrThrow()
         val chainId = extractIdFromUrl(speciesResponse.evolutionChain.url)
         val chainResponse = apiService.get<EvolutionChainResponse>("evolution-chain/$chainId").getOrThrow()
 
         val result = mutableListOf<EvolutionNode>()
+        
         fun traverse(link: ChainLink) {
             val id = extractIdFromUrl(link.species.url)
-            result.add(EvolutionNode(id = id, name = link.species.name, imageUrl = artworkUrl(id)))
-            // Branching chains (e.g. Eevee → 8 Eeveelutions) are flattened by DFS;
-            // the horizontal scroll row handles the overflow acceptably.
+            val localizedName = nameMapping[id.toString()] ?: link.species.name
+            result.add(EvolutionNode(id = id, name = localizedName, imageUrl = artworkUrl(id)))
             link.evolvesTo.forEach { traverse(it) }
         }
         traverse(chainResponse.chain)
 
-        return result
+        result.sortBy { it.id }
+        result
     }
 
-    private fun PokemonDetailResponse.toDomain(): PokemonDetail {
+    private fun PokemonDetailResponse.toDomain(species: PokemonSpeciesResponse): PokemonDetail {
         return PokemonDetail(
             id = id,
-            name = name,
+            name = species.names.filterNameChinese() ?: nameMapping[id.toString()] ?: name,
             imageUrl = sprites.other?.officialArtwork?.frontDefault
                 ?: sprites.frontDefault
                 ?: artworkUrl(id),
@@ -81,7 +111,18 @@ class PokemonRepositoryImpl(
             stats = stats.map {
                 PokemonStatInfo(name = it.stat.name, baseStat = it.baseStat)
             },
+            flavorText = species.flavorTextEntries.filterFlavorTextChinese() ?: "",
         )
+    }
+
+    private fun List<ApiName>.filterNameChinese(): String? {
+        return find { it.language.name == "zh-Hant" }?.name
+            ?: find { it.language.name == "en" }?.name // Fallback to English if no Traditional Chinese
+    }
+
+    private fun List<FlavorTextEntry>.filterFlavorTextChinese(): String? {
+        return find { it.language.name == "zh-Hant" }?.flavorText?.replace("\n", " ")
+            ?: find { it.language.name == "en" }?.flavorText?.replace("\n", " ")
     }
 
     companion object {

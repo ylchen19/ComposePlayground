@@ -9,10 +9,12 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.composeplayground.R
 import java.util.Locale
 
 // Type color map
@@ -43,13 +45,14 @@ fun PokemonTypeLabel(
     modifier: Modifier = Modifier,
 ) {
     val color = pokemonTypeColors[typeName] ?: Color.Gray
+    val translatedName = translateType(typeName)
     Surface(
         modifier = modifier,
         shape = RoundedCornerShape(16.dp),
         color = color,
     ) {
         Text(
-            text = typeName.replaceFirstChar { it.titlecase(Locale.ROOT) },
+            text = translatedName,
             color = Color.White,
             fontSize = 11.sp,
             fontWeight = FontWeight.Bold,
@@ -67,12 +70,13 @@ fun PokemonTypeFilterChip(
     modifier: Modifier = Modifier,
 ) {
     val color = pokemonTypeColors[typeName] ?: Color.Gray
+    val translatedName = translateType(typeName)
     FilterChip(
         selected = isSelected,
         onClick = onClick,
         label = {
             Text(
-                text = typeName.replaceFirstChar { it.titlecase(Locale.ROOT) },
+                text = translatedName,
                 fontSize = 12.sp,
                 fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
             )
@@ -89,4 +93,31 @@ fun PokemonTypeFilterChip(
         ),
         modifier = modifier,
     )
+}
+
+@Composable
+private fun translateType(typeName: String): String {
+    if (typeName == "All") return stringResource(R.string.all)
+    
+    return when (typeName.lowercase(Locale.ROOT)) {
+        "normal" -> "一般"
+        "fire" -> "火"
+        "water" -> "水"
+        "electric" -> "電"
+        "grass" -> "草"
+        "ice" -> "冰"
+        "fighting" -> "格鬥"
+        "poison" -> "毒"
+        "ground" -> "地面"
+        "flying" -> "飛行"
+        "psychic" -> "超能力"
+        "bug" -> "蟲"
+        "rock" -> "岩石"
+        "ghost" -> "幽靈"
+        "dragon" -> "龍"
+        "dark" -> "惡"
+        "steel" -> "鋼"
+        "fairy" -> "妖精"
+        else -> typeName.replaceFirstChar { it.titlecase(Locale.ROOT) }
+    }
 }

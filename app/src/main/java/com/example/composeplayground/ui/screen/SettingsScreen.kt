@@ -32,9 +32,11 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.example.composeplayground.R
 import com.example.composeplayground.data.analyzer.ModelStatus
 import com.example.composeplayground.ui.screen.settings.GeminiNanoSettingsViewModel
 import com.example.composeplayground.ui.theme.DarkModeOption
@@ -56,10 +58,13 @@ fun SettingsScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Settings") },
+                title = { Text(stringResource(R.string.settings)) },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                        Icon(
+                            Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = stringResource(R.string.back),
+                        )
                     }
                 },
             )
@@ -101,16 +106,16 @@ private fun DarkModeSection(
     onOptionSelected: (DarkModeOption) -> Unit,
 ) {
     Text(
-        text = "Dark Mode",
+        text = stringResource(R.string.dark_mode),
         style = MaterialTheme.typography.titleMedium,
         modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
     )
     Column(modifier = Modifier.selectableGroup()) {
         DarkModeOption.entries.forEach { option ->
             val label = when (option) {
-                DarkModeOption.SYSTEM -> "Follow system"
-                DarkModeOption.LIGHT -> "Light"
-                DarkModeOption.DARK -> "Dark"
+                DarkModeOption.SYSTEM -> stringResource(R.string.dark_mode_system)
+                DarkModeOption.LIGHT -> stringResource(R.string.dark_mode_light)
+                DarkModeOption.DARK -> stringResource(R.string.dark_mode_dark)
             }
             Row(
                 verticalAlignment = Alignment.CenterVertically,
@@ -140,7 +145,7 @@ private fun DynamicColorSection(
     onToggle: (Boolean) -> Unit,
 ) {
     Text(
-        text = "Dynamic Color",
+        text = stringResource(R.string.dynamic_color),
         style = MaterialTheme.typography.titleMedium,
         modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
     )
@@ -151,9 +156,12 @@ private fun DynamicColorSection(
             .padding(horizontal = 16.dp, vertical = 8.dp),
     ) {
         Column(modifier = Modifier.weight(1f)) {
-            Text(text = "Use wallpaper colors", style = MaterialTheme.typography.bodyLarge)
             Text(
-                text = "Apply colors from your wallpaper to the app theme",
+                text = stringResource(R.string.use_wallpaper_colors),
+                style = MaterialTheme.typography.bodyLarge,
+            )
+            Text(
+                text = stringResource(R.string.dynamic_color_desc),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
@@ -168,7 +176,7 @@ private fun GeminiNanoSection(
     onDownload: () -> Unit,
 ) {
     Text(
-        text = "Gemini Nano AI 模型",
+        text = stringResource(R.string.gemini_status),
         style = MaterialTheme.typography.titleMedium,
         modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
     )
@@ -196,13 +204,17 @@ private fun GeminiNanoSection(
             }
             ModelStatus.Downloadable -> {
                 Button(onClick = onDownload, modifier = Modifier.fillMaxWidth()) {
-                    Text("下載 Gemini Nano 模型 (~2 GB)")
+                    Text(stringResource(R.string.download_gemini_model))
                 }
             }
             is ModelStatus.Downloading -> {
                 val percent = (status.progress * 100).toInt()
                 Text(
-                    text = if (status.progress > 0f) "下載中… $percent%" else "正在啟動下載…",
+                    text = if (status.progress > 0f) {
+                        stringResource(R.string.downloading) + " $percent%"
+                    } else {
+                        stringResource(R.string.starting_download)
+                    },
                     style = MaterialTheme.typography.bodyMedium,
                 )
                 Spacer(Modifier.height(8.dp))
@@ -231,7 +243,7 @@ private fun GeminiNanoSection(
                     color = MaterialTheme.colorScheme.error,
                 )
                 Spacer(Modifier.height(8.dp))
-                Button(onClick = onDownload) { Text("重試") }
+                Button(onClick = onDownload) { Text(stringResource(R.string.retry)) }
             }
         }
         Spacer(Modifier.height(16.dp))

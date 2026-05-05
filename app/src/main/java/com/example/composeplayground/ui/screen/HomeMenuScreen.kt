@@ -31,8 +31,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.example.composeplayground.R
 
 /**
  * App 進入後的首頁菜單，列出可用的功能模組。
@@ -64,8 +66,8 @@ fun HomeMenuScreen(
                         iconBackgroundColor = MaterialTheme.colorScheme.primary,
                         containerColor = MaterialTheme.colorScheme.primaryContainer,
                         contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
-                        title = "Pokémon 圖鑑",
-                        subtitle = "瀏覽全部寶可夢、依屬性分類、查看詳細資訊",
+                        title = stringResource(R.string.feature_pokemon_title),
+                        subtitle = stringResource(R.string.feature_pokemon_subtitle),
                         onClick = onNavigateToPokemon,
                     )
                     FeatureCard(
@@ -73,8 +75,8 @@ fun HomeMenuScreen(
                         iconBackgroundColor = MaterialTheme.colorScheme.secondary,
                         containerColor = MaterialTheme.colorScheme.secondaryContainer,
                         contentColor = MaterialTheme.colorScheme.onSecondaryContainer,
-                        title = "Picsum 圖庫",
-                        subtitle = "載入大量大檔案圖片，示範 Coil 快取與 Paging 串流",
+                        title = stringResource(R.string.feature_picsum_title),
+                        subtitle = stringResource(R.string.feature_picsum_subtitle),
                         onClick = onNavigateToPicsum,
                     )
                 }
@@ -108,7 +110,7 @@ private fun HeroSection(
         ) {
             Icon(
                 Icons.Default.Settings,
-                contentDescription = "設定",
+                contentDescription = stringResource(R.string.settings),
                 tint = MaterialTheme.colorScheme.onPrimary,
             )
         }
@@ -124,7 +126,7 @@ private fun HeroSection(
                 fontWeight = FontWeight.ExtraBold,
             )
             Text(
-                text = "Explore Modern Android",
+                text = stringResource(R.string.home_slogan),
                 style = MaterialTheme.typography.titleMedium,
                 color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.8f),
                 modifier = Modifier.padding(top = 4.dp),
