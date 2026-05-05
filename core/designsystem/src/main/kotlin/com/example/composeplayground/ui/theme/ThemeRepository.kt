@@ -6,4 +6,5 @@ interface ThemeRepository {
     val themeConfigFlow: Flow<ThemeConfig>
     suspend fun setDarkModeOption(option: DarkModeOption)
     suspend fun setDynamicColor(enabled: Boolean)
+    suspend fun setPerformanceMetricsEnabled(enabled: Boolean)
 }

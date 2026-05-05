@@ -19,4 +19,8 @@ class ThemeViewModel(private val themeRepository: ThemeRepository) : ViewModel()
     fun setDynamicColor(enabled: Boolean) {
         viewModelScope.launch { themeRepository.setDynamicColor(enabled) }
     }
+
+    fun setPerformanceMetricsEnabled(enabled: Boolean) {
+        viewModelScope.launch { themeRepository.setPerformanceMetricsEnabled(enabled) }
+    }
 }

@@ -36,6 +36,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.example.composeplayground.BuildConfig
 import com.example.composeplayground.R
 import com.example.composeplayground.data.analyzer.ModelStatus
 import com.example.composeplayground.ui.screen.settings.GeminiNanoSettingsViewModel
@@ -90,6 +91,13 @@ fun SettingsScreen(
                 Spacer(modifier = Modifier.height(16.dp))
             }
             HorizontalDivider()
+            if (BuildConfig.DEBUG) {
+                PerformanceMetricsSection(
+                    enabled = themeConfig.showPerformanceMetrics,
+                    onToggle = themeViewModel::setPerformanceMetricsEnabled,
+                )
+                HorizontalDivider()
+            }
             GeminiNanoSection(
                 status = geminiNanoStatus,
                 onDownload = geminiNanoVm::startDownload,
@@ -99,6 +107,37 @@ fun SettingsScreen(
 }
 
 // ── Private composables ──────────────────────────────────────────────────────
+
+@Composable
+private fun PerformanceMetricsSection(
+    enabled: Boolean,
+    onToggle: (Boolean) -> Unit,
+) {
+    Text(
+        text = stringResource(R.string.developer_options),
+        style = MaterialTheme.typography.titleMedium,
+        modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
+    )
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 8.dp),
+    ) {
+        Column(modifier = Modifier.weight(1f)) {
+            Text(
+                text = stringResource(R.string.show_perf_dashboard),
+                style = MaterialTheme.typography.bodyLarge,
+            )
+            Text(
+                text = stringResource(R.string.show_perf_dashboard_desc),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
+        Switch(checked = enabled, onCheckedChange = onToggle)
+    }
+}
 
 @Composable
 private fun DarkModeSection(

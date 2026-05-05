@@ -47,4 +47,7 @@
     <string name="dynamic_color_desc">將桌布色彩套用至 App 主題</string>
     <string name="downloading">下載中…</string>
     <string name="starting_download">正在啟動下載…</string>
+    <string name="developer_options">開發者選項</string>
+    <string name="show_perf_dashboard">顯示效能儀表板</string>
+    <string name="show_perf_dashboard_desc">即時監控 FPS、記憶體與重組次數。</string>
 </resources>

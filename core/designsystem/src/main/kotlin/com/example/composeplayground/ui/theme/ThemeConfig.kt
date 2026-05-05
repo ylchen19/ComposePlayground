@@ -9,4 +9,5 @@ enum class DarkModeOption {
 data class ThemeConfig(
     val darkModeOption: DarkModeOption = DarkModeOption.SYSTEM,
     val dynamicColor: Boolean = true,
+    val showPerformanceMetrics: Boolean = false,
 )

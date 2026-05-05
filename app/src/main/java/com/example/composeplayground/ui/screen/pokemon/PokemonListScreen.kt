@@ -52,6 +52,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
@@ -71,6 +72,8 @@ import coil3.imageLoader
 import coil3.request.ImageRequest
 import com.example.composeplayground.R
 import com.example.composeplayground.data.model.Pokemon
+import com.example.composeplayground.ui.perf.LocalPerformanceMonitor
+import com.example.composeplayground.ui.perf.trackRecomposition
 import com.example.composeplayground.ui.screen.pokemon.components.PokemonGridCard
 import com.example.composeplayground.ui.screen.pokemon.components.PokemonListItem
 import com.example.composeplayground.ui.screen.pokemon.components.PokemonTypeFilterChip
@@ -91,6 +94,25 @@ fun PokemonListScreen(
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val pagingItems = viewModel.pokemonPagingFlow.collectAsLazyPagingItems()
+    val monitor = LocalPerformanceMonitor.current
+
+    val loadStartTime = remember { mutableLongStateOf(0L) }
+    LaunchedEffect(pagingItems.loadState.refresh, pagingItems.loadState.append) {
+        val refresh = pagingItems.loadState.refresh
+        val append = pagingItems.loadState.append
+
+        if (refresh is LoadState.Loading || append is LoadState.Loading) {
+            if (loadStartTime.longValue == 0L) {
+                loadStartTime.longValue = System.currentTimeMillis()
+            }
+        } else if (refresh !is LoadState.Loading && append !is LoadState.Loading) {
+            if (loadStartTime.longValue != 0L) {
+                val duration = System.currentTimeMillis() - loadStartTime.longValue
+                monitor.pagingLoadTimeMs.longValue = duration
+                loadStartTime.longValue = 0L
+            }
+        }
+    }
 
     // Gap 4: Hoist scroll states above AnimatedContent so they survive view-mode transitions.
     val gridState = rememberLazyGridState()
@@ -382,7 +404,9 @@ private fun PokemonGrid(
         contentPadding = PaddingValues(16.dp),
         horizontalArrangement = Arrangement.spacedBy(12.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),
-        modifier = Modifier.fillMaxSize(),
+        modifier = Modifier
+            .fillMaxSize()
+            .trackRecomposition("PokemonGrid"),
     ) {
         items(
             count = pagingItems.itemCount,
@@ -394,7 +418,9 @@ private fun PokemonGrid(
                 PokemonGridCard(
                     pokemon = pokemon,
                     onClick = { onNavigateToDetail(pokemon.id) },
-                    modifier = Modifier.animateItem(),
+                    modifier = Modifier
+                        .animateItem()
+                        .trackRecomposition("PokemonGridItems"),
                 )
             }
         }
@@ -437,7 +463,9 @@ private fun PokemonList(
         state = state,
         contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
         verticalArrangement = Arrangement.spacedBy(8.dp),
-        modifier = Modifier.fillMaxSize(),
+        modifier = Modifier
+            .fillMaxSize()
+            .trackRecomposition("PokemonList"),
     ) {
         items(
             count = pagingItems.itemCount,
@@ -449,7 +477,9 @@ private fun PokemonList(
                 PokemonListItem(
                     pokemon = pokemon,
                     onClick = { onNavigateToDetail(pokemon.id) },
-                    modifier = Modifier.animateItem(),
+                    modifier = Modifier
+                        .animateItem()
+                        .trackRecomposition("PokemonListItems"),
                 )
             }
         }
