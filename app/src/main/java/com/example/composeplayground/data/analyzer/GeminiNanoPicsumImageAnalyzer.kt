@@ -10,10 +10,7 @@ import coil3.imageLoader
 import coil3.request.ImageRequest
 import coil3.request.SuccessResult
 import coil3.request.allowHardware
-import com.google.mlkit.genai.common.DownloadStatus
-import com.google.mlkit.genai.common.FeatureStatus
 import com.google.mlkit.genai.prompt.GenerateContentRequest
-import com.google.mlkit.genai.prompt.Generation
 import com.google.mlkit.genai.prompt.GenerativeModel
 import com.google.mlkit.genai.prompt.ImagePart
 import com.google.mlkit.genai.prompt.TextPart
@@ -21,7 +18,6 @@ import com.google.mlkit.vision.common.InputImage
 import com.google.mlkit.vision.label.ImageLabeling
 import com.google.mlkit.vision.label.defaults.ImageLabelerOptions
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withContext
 import kotlin.coroutines.resume
@@ -41,12 +37,16 @@ import kotlin.coroutines.resumeWithException
  */
 class GeminiNanoPicsumImageAnalyzer(
     private val appContext: Context,
+    private val modelManager: GeminiNanoModelManager,
 ) : PicsumImageAnalyzer {
 
     private val labeler = ImageLabeling.getClient(ImageLabelerOptions.DEFAULT_OPTIONS)
     private val cache = LruCache<String, String>(CACHE_SIZE)
 
-    override suspend fun summarize(photoId: String, imageUrl: String): Result<String> {
+    override suspend fun summarize(
+        photoId: String,
+        imageUrl: String,
+    ): Result<String> {
         cache.get(photoId)?.let { return Result.success(it) }
 
         return withContext(Dispatchers.Default) {
@@ -62,7 +62,7 @@ class GeminiNanoPicsumImageAnalyzer(
     // ── 主流程 ───────────────────────────────────────────────────────────────
 
     private suspend fun generateDescription(bitmap: Bitmap): String {
-        val model = acquireReadyModel()
+        val model = modelManager.ensureReady()
         // 先跑 ML Kit，讓標籤在 Tier 1 失敗時可立即重用，不必重跑
         val labels = runLabelerSafe(bitmap)
         Log.d(TAG, "ML Kit labels: ${labels.map { "${it.first}(${String.format("%.2f", it.second)})" }}")
@@ -92,31 +92,6 @@ class GeminiNanoPicsumImageAnalyzer(
     }
 
     // ── Gemini Nano ──────────────────────────────────────────────────────────
-
-    /** 取得已就緒（或下載後就緒）的模型；裝置不支援回傳 null。 */
-    private suspend fun acquireReadyModel(): GenerativeModel? = try {
-        val model = Generation.getClient()
-        val status = model.checkStatus()
-        Log.d(TAG, "Gemini Nano feature status: $status")
-        when (status) {
-            FeatureStatus.AVAILABLE -> model
-            FeatureStatus.DOWNLOADABLE -> {
-                Log.d(TAG, "Gemini Nano downloading...")
-                awaitDownload(model)
-                Log.d(TAG, "Gemini Nano download complete")
-                model
-            }
-            else -> {
-                Log.w(TAG, "Gemini Nano not available (status=$status)")
-                null
-            }
-        }
-    } catch (e: kotlinx.coroutines.CancellationException) {
-        throw e  // 不吞掉取消信號，讓協程正常結束
-    } catch (e: Exception) {
-        Log.w(TAG, "acquireReadyModel failed: ${e.javaClass.simpleName}: ${e.message}")
-        null
-    }
 
     /** 多模態推論；Pixel 8/9a 不支援圖像輸入時擲例外，catch 後回傳 null。 */
     private suspend fun tryMultimodal(model: GenerativeModel, bitmap: Bitmap): String? = try {
@@ -179,12 +154,6 @@ class GeminiNanoPicsumImageAnalyzer(
             }
             .firstOrNull()
             ?.takeIf { it.length <= 60 }  // 超過 60 字通常是說明文字而非描述句
-    }
-
-    private suspend fun awaitDownload(model: GenerativeModel) {
-        val result = model.download()
-            .first { it is DownloadStatus.DownloadCompleted || it is DownloadStatus.DownloadFailed }
-        if (result is DownloadStatus.DownloadFailed) throw result.e
     }
 
     // ── ML Kit ───────────────────────────────────────────────────────────────

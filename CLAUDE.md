@@ -234,25 +234,27 @@ val viewModel = koinViewModel<PokemonDetailViewModel>(
 
 ### 設計重點
 
-- `acquireReadyModel()`：確認 `FeatureStatus.AVAILABLE`，若 `DOWNLOADABLE` 則等待下載完成，其餘回傳 `null` 降至 Tier 3
+- `GeminiNanoModelManager` (singleton)：模型生命週期單一管理者，對外暴露 `status: StateFlow<ModelStatus>`，內部以 `Mutex + Deferred` 防止 detail 與 settings 並發觸發雙下載
+- 兩個入口：Settings 主動下載（`startDownload()`）；詳細頁懶載入（`ensureReady()` 自動觸發並等候）
 - Gemini Nano 回應過濾：逐行取第一個有效中文句（6–60 字，排除 Unicode 表格線）——Samsung 裝置有時輸出表格格式
 - Prompt 設計：短指令（小模型用短 prompt 比長 prompt 更穩定）+ 明確禁止表格/條列
 
 ### ViewModel 整合
 
 ```kotlin
-// PicsumDetailViewModel
-init {
-    viewModelScope.launch {
-        uiState.update { it.copy(summary = ImageSummaryState.Loading) }
-        analyzer.summarize(photo.id, photo.thumbnailUrl(ANALYZE_THUMB_SIZE))
-            .onSuccess { uiState.update { it.copy(summary = ImageSummaryState.Success(it)) } }
-            .onFailure { uiState.update { it.copy(summary = ImageSummaryState.Error(it.message.orEmpty())) } }
+// PicsumDetailViewModel：本地分析狀態 + manager 下載狀態 combine 成 UI 狀態
+val uiState = combine(analysisState, modelManager.status) { local, model ->
+    val summary = when {
+        local is ImageSummaryState.Loading && model is ModelStatus.Downloading ->
+            ImageSummaryState.Downloading(model.progress)
+        else -> local
     }
-}
+    PicsumDetailUiState(photo, summary)
+}.stateIn(viewModelScope, SharingStarted.Eagerly, PicsumDetailUiState(photo))
 ```
 
-`ImageSummaryState`：`Idle | Loading | Success(description) | Error(message)`，標 `@Immutable`
+`ImageSummaryState`：`Idle | Loading | Downloading(progress) | Success | Error`，標 `@Immutable`
+`ModelStatus`：`Unknown | NotSupported | Downloadable | Downloading(progress) | Ready | Failed(message)`
 
 ## Picsum 排序策略（非直覺實作）
 

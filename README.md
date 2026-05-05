@@ -149,7 +149,16 @@ Batch 2  ┌── page 7                 ┐
 
 ## Picsum AI 圖片描述
 
-詳細頁（`PicsumDetailScreen`）進入時，`PicsumDetailViewModel` 以縮圖 URL 呼叫 `PicsumImageAnalyzer.summarize()`，結果以 `ImageSummaryState`（`Idle | Loading | Success | Error`）暴露給 UI，顯示於底部資訊列。
+詳細頁（`PicsumDetailScreen`）進入時，`PicsumDetailViewModel` 以縮圖 URL 呼叫 `PicsumImageAnalyzer.summarize()`，結果以 `ImageSummaryState`（`Idle | Loading | Downloading(progress) | Success | Error`）暴露給 UI，顯示於底部資訊列。
+
+### Gemini Nano 模型管理（Hybrid 入口）
+
+`GeminiNanoModelManager`（singleton）為模型生命週期單一管理者，對外暴露 `status: StateFlow<ModelStatus>`，內部用 `Mutex + Deferred` 防止重複下載。兩個入口共用同一份狀態：
+
+- **Settings → 「Gemini Nano AI 模型」**：使用者主動下載 ~2 GB 模型，可看到即時進度條、就緒狀態與錯誤重試
+- **詳細頁懶載入**：使用者直接進入詳細頁時自動觸發下載，進度同步反映在描述區塊
+
+`ModelStatus`：`Unknown | NotSupported | Downloadable | Downloading(progress) | Ready | Failed(message)`
 
 ### 三層策略（全程 on-device）
 

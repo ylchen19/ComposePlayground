@@ -24,6 +24,7 @@ import com.example.composeplayground.ui.screen.pokemon.PokemonListScreen
 import com.example.composeplayground.ui.screen.pokemon.PokemonListViewModel
 import com.example.composeplayground.ui.screen.pokemon.PokemonTypeGalleryScreen
 import com.example.composeplayground.ui.screen.pokemon.PokemonTypeGalleryViewModel
+import com.example.composeplayground.ui.screen.settings.GeminiNanoSettingsViewModel
 import com.example.composeplayground.ui.theme.ThemeViewModel
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
@@ -104,8 +105,10 @@ fun AppNavHost(modifier: Modifier = Modifier) {
             }
             entry<Settings> {
                 val themeViewModel = koinViewModel<ThemeViewModel>()
+                val geminiNanoVm = koinViewModel<GeminiNanoSettingsViewModel>()
                 SettingsScreen(
                     themeViewModel = themeViewModel,
+                    geminiNanoVm = geminiNanoVm,
                     onBack = { navigate { backStack.removeLastOrNull() } },
                 )
             }

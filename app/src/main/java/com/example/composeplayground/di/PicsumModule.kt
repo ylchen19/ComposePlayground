@@ -1,11 +1,13 @@
 package com.example.composeplayground.di
 
+import com.example.composeplayground.data.analyzer.GeminiNanoModelManager
 import com.example.composeplayground.data.analyzer.GeminiNanoPicsumImageAnalyzer
 import com.example.composeplayground.data.analyzer.PicsumImageAnalyzer
 import com.example.composeplayground.data.repository.PicsumRepository
 import com.example.composeplayground.data.repository.PicsumRepositoryImpl
 import com.example.composeplayground.ui.screen.picsum.PicsumDetailViewModel
 import com.example.composeplayground.ui.screen.picsum.PicsumGalleryViewModel
+import com.example.composeplayground.ui.screen.settings.GeminiNanoSettingsViewModel
 import org.koin.android.ext.koin.androidContext
 import org.koin.core.module.dsl.viewModel
 import org.koin.core.qualifier.named
@@ -25,7 +27,10 @@ import org.koin.dsl.module
  */
 val picsumModule = module {
     single<PicsumRepository> { PicsumRepositoryImpl(get(named("picsumApi"))) }
-    single<PicsumImageAnalyzer> { GeminiNanoPicsumImageAnalyzer(appContext = androidContext()) }
+    single { GeminiNanoModelManager(appContext = androidContext()) }
+    single<PicsumImageAnalyzer> {
+        GeminiNanoPicsumImageAnalyzer(appContext = androidContext(), modelManager = get())
+    }
 
     viewModel { PicsumGalleryViewModel(get()) }
     viewModel { params ->
@@ -35,6 +40,8 @@ val picsumModule = module {
             originalWidth = params.get(),
             originalHeight = params.get(),
             analyzer = get(),
+            modelManager = get(),
         )
     }
+    viewModel { GeminiNanoSettingsViewModel(get()) }
 }
