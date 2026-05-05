@@ -48,6 +48,11 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.material3.TextField
+import androidx.compose.material3.TextFieldDefaults
+import androidx.compose.material3.SuggestionChip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -136,18 +141,18 @@ fun PicsumGalleryScreen(
                     if (uiState.isSearchActive) {
                         TopAppBar(
                             title = {
-                                androidx.compose.material3.TextField(
+                                TextField(
                                     value = uiState.searchQuery,
                                     onValueChange = viewModel::updateSearchQuery,
                                     placeholder = { Text(stringResource(R.string.search_author)) },
                                     singleLine = true,
                                     modifier = Modifier.fillMaxWidth(),
-                                    colors = androidx.compose.material3.TextFieldDefaults.colors(
-                                        focusedContainerColor = androidx.compose.ui.graphics.Color.Transparent,
-                                        unfocusedContainerColor = androidx.compose.ui.graphics.Color.Transparent,
-                                        disabledContainerColor = androidx.compose.ui.graphics.Color.Transparent,
-                                        focusedIndicatorColor = androidx.compose.ui.graphics.Color.Transparent,
-                                        unfocusedIndicatorColor = androidx.compose.ui.graphics.Color.Transparent,
+                                    colors = TextFieldDefaults.colors(
+                                        focusedContainerColor = Color.Transparent,
+                                        unfocusedContainerColor = Color.Transparent,
+                                        disabledContainerColor = Color.Transparent,
+                                        focusedIndicatorColor = Color.Transparent,
+                                        unfocusedIndicatorColor = Color.Transparent,
                                     )
                                 )
                             },
@@ -168,14 +173,14 @@ fun PicsumGalleryScreen(
                                 !(uiState.authorSuggestions.size == 1 && uiState.authorSuggestions.first().equals(uiState.searchQuery, ignoreCase = true))
 
                         if (showSuggestions) {
-                            androidx.compose.foundation.lazy.LazyRow(
+                            LazyRow(
                                 contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
                                 horizontalArrangement = Arrangement.spacedBy(8.dp),
                                 modifier = Modifier.fillMaxWidth().background(MaterialTheme.colorScheme.surface)
                             ) {
                                 items(uiState.authorSuggestions.size) { index ->
                                     val author = uiState.authorSuggestions[index]
-                                    androidx.compose.material3.SuggestionChip(
+                                    SuggestionChip(
                                         onClick = { viewModel.selectAuthor(author) },
                                         label = { Text(author) }
                                     )

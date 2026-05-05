@@ -42,7 +42,9 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.example.composeplayground.R
 import com.example.composeplayground.ui.screen.pokemon.components.PokemonGridCard
 import com.example.composeplayground.ui.screen.pokemon.components.ShimmerGridCard
 import com.example.composeplayground.ui.screen.pokemon.components.UniformHeightLazyRow
@@ -67,7 +69,7 @@ fun PokemonTypeGalleryScreen(
             TopAppBar(
                 title = {
                     Text(
-                        text = androidx.compose.ui.res.stringResource(com.example.composeplayground.R.string.type_gallery),
+                        text = stringResource(R.string.type_gallery),
                         fontWeight = FontWeight.Bold,
                         color = PokemonYellow,
                     )
@@ -76,7 +78,7 @@ fun PokemonTypeGalleryScreen(
                     IconButton(onClick = onBack) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = androidx.compose.ui.res.stringResource(com.example.composeplayground.R.string.back),
+                            contentDescription = stringResource(R.string.back),
                             tint = Color.White,
                         )
                     }
@@ -150,7 +152,7 @@ private fun PokemonTypeSectionRow(
             Spacer(modifier = Modifier.weight(1f))
             if (!section.isLoading) {
                 Text(
-                    text = androidx.compose.ui.res.stringResource(com.example.composeplayground.R.string.pokemon_count, section.pokemon.size),
+                    text = stringResource(R.string.pokemon_count, section.pokemon.size),
                     style = MaterialTheme.typography.labelMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
@@ -175,7 +177,7 @@ private fun PokemonTypeSectionRow(
                 contentAlignment = Alignment.Center,
             ) {
                 Text(
-                    text = androidx.compose.ui.res.stringResource(com.example.composeplayground.R.string.no_data),
+                    text = stringResource(R.string.no_data),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )

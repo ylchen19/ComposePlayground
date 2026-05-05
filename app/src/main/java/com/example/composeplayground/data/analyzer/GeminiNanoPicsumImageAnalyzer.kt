@@ -11,10 +11,12 @@ import coil3.request.ImageRequest
 import coil3.request.SuccessResult
 import coil3.request.allowHardware
 import com.google.mlkit.genai.prompt.GenerateContentRequest
+import com.google.mlkit.genai.prompt.GenerateContentResponse
 import com.google.mlkit.genai.prompt.GenerativeModel
 import com.google.mlkit.genai.prompt.ImagePart
 import com.google.mlkit.genai.prompt.TextPart
 import com.google.mlkit.vision.common.InputImage
+import com.google.mlkit.vision.label.ImageLabel
 import com.google.mlkit.vision.label.ImageLabeling
 import com.google.mlkit.vision.label.defaults.ImageLabelerOptions
 import kotlinx.coroutines.Dispatchers
@@ -141,7 +143,7 @@ class GeminiNanoPicsumImageAnalyzer(
      * （含 ├ ┼ │ 等字元），此處直接拒絕含有這些字元的行，
      * 只接受 6–60 字的純中文句子。
      */
-    private fun com.google.mlkit.genai.prompt.GenerateContentResponse.firstCandidate(): String? {
+    private fun GenerateContentResponse.firstCandidate(): String? {
         val raw = candidates.firstOrNull()?.text?.trim() ?: return null
         return raw.lineSequence()
             .map { it.trim() }
@@ -164,7 +166,7 @@ class GeminiNanoPicsumImageAnalyzer(
 
     private suspend fun runLabeler(
         bitmap: Bitmap,
-    ): List<com.google.mlkit.vision.label.ImageLabel> =
+    ): List<ImageLabel> =
         suspendCancellableCoroutine { cont ->
             labeler.process(InputImage.fromBitmap(bitmap, 0))
                 .addOnSuccessListener { if (cont.isActive) cont.resume(it) }
