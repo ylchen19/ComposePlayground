@@ -70,7 +70,7 @@ fun AppNavHost(modifier: Modifier = Modifier) {
 
     NavDisplay(
         backStack = backStack,
-        onBack = { navigate { backStack.removeLastOrNull() } },
+        onBack = { backStack.removeLastOrNull() },
         modifier = modifier,
         entryDecorators = listOf(
             transitionTrackingDecorator,
