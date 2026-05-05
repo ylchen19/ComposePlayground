@@ -214,6 +214,7 @@ val viewModel = koinViewModel<PokemonDetailViewModel>(
 5. **註解寫「為什麼」不寫「做什麼」**：函式名與型別已說明 what；註解只在 workaround、非直覺取捨、生命週期陷阱（如 Picsum 排序遮罩生命週期）時出現
 6. **不過度抽象**：目前不引入 UseCase 層——Repository 已能承擔業務邏輯；只有當同一邏輯被多個 ViewModel 重複時才考慮抽出
 7. **小函式 + 早返回**：複雜流程拆成 private helper（如 `loadAllPhotos()`），避免巢狀超過兩層
+8. **一律用 import，不用 fully qualified name**：寫 `import androidx.compose.runtime.getValue` 再用 `getValue`，不要在程式碼中寫 `androidx.compose.runtime.getValue(...)`。同一 package 下的類別不需要 import，但跨 package 一律以 import 取代 FQN，保持程式碼可讀性
 
 ## Picsum AI 圖片描述（三層策略）
 
