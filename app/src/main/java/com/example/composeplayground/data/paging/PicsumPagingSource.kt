@@ -11,6 +11,9 @@ import kotlin.random.Random
  *
  * Picsum 的 page 從 1 開始，總計約 1084 張。回傳空陣列代表已抵達最後一頁。
  *
+ * Picsum API 在不同 page 之間可能回傳重複的 photo ID，因此在每頁載入後做
+ * ID deduplication，避免 LazyGrid 因 duplicate key 而 crash。
+ *
  * @param randomSeed 由 ViewModel 於建立時產生的隨機種子，使每次進入頁面的排序都不同。
  * 每批載入（每頁）以 `seed xor page` 做局部洗牌，達到分區塊亂序的效果。
  */
@@ -18,6 +21,8 @@ class PicsumPagingSource(
     private val repository: PicsumRepository,
     private val randomSeed: Long,
 ) : PagingSource<Int, PicsumPhoto>() {
+
+    private val seenIds = mutableSetOf<String>()
 
     override suspend fun load(params: LoadParams<Int>): LoadResult<Int, PicsumPhoto> {
         val page = params.key ?: 1
@@ -27,10 +32,11 @@ class PicsumPagingSource(
             // cause the initial 60-item load (page=1, limit=60) and the following 30-item
             // load (page=2, limit=30) to overlap at items 31–60, producing duplicate IDs.
             val photos = repository.fetchPhotos(page = page, limit = PAGE_SIZE)
+            val deduplicated = photos.filter { photo -> seenIds.add(photo.id) }
             LoadResult.Page(
-                data = photos.shuffled(Random(randomSeed xor page.toLong())),
+                data = deduplicated.shuffled(Random(randomSeed xor page.toLong())),
                 prevKey = if (page > 1) page - 1 else null,
-                nextKey = if (photos.isEmpty()) null else page + 1,
+                nextKey = if (deduplicated.isEmpty()) null else page + 1,
             )
         } catch (e: Exception) {
             LoadResult.Error(e)

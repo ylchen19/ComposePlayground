@@ -25,6 +25,8 @@ class AnimePagingSource(
     private val args: AnimePagingArgs,
 ) : PagingSource<Int, Anime>() {
 
+    private val seenIds = mutableSetOf<Int>()
+
     override suspend fun load(params: LoadParams<Int>): LoadResult<Int, Anime> {
         val page = params.key ?: 1
         return try {
@@ -38,10 +40,12 @@ class AnimePagingSource(
                 orderBy = args.orderBy,
                 sortDirection = args.sortDirection,
             )
+            // Jikan API 在不同 page 間可能回傳重複 anime ID，按 ID 過濾
+            val deduplicated = result.anime.filter { anime -> seenIds.add(anime.id) }
             LoadResult.Page(
-                data = result.anime,
+                data = deduplicated,
                 prevKey = if (page > 1) page - 1 else null,
-                nextKey = if (result.hasNext && result.anime.isNotEmpty()) page + 1 else null,
+                nextKey = if (result.hasNext && deduplicated.isNotEmpty()) page + 1 else null,
             )
         } catch (e: Exception) {
             LoadResult.Error(e)

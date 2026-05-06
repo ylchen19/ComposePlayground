@@ -61,6 +61,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.paging.LoadState
 import androidx.paging.compose.LazyPagingItems
 import androidx.paging.compose.collectAsLazyPagingItems
+import androidx.paging.compose.itemKey
 import com.example.composeplayground.data.model.Anime
 import com.example.composeplayground.data.repository.AnimeOrderBy
 import com.example.composeplayground.data.repository.SortDirection
@@ -399,7 +400,7 @@ private fun AnimeGrid(
     ) {
         items(
             count = pagingItems.itemCount,
-            key = { index -> pagingItems[index]?.id ?: index },
+            key = pagingItems.itemKey { it.id },
             contentType = { "anime_grid" },
         ) { index ->
             val anime = pagingItems[index]
@@ -438,7 +439,7 @@ private fun AnimeList(
     ) {
         items(
             count = pagingItems.itemCount,
-            key = { index -> pagingItems[index]?.id ?: index },
+            key = pagingItems.itemKey { it.id },
             contentType = { "anime_list" },
         ) { index ->
             val anime = pagingItems[index]

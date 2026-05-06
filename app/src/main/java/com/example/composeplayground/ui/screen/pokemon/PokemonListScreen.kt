@@ -68,6 +68,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.paging.LoadState
 import androidx.paging.compose.LazyPagingItems
 import androidx.paging.compose.collectAsLazyPagingItems
+import androidx.paging.compose.itemKey
 import coil3.imageLoader
 import coil3.request.ImageRequest
 import com.example.composeplayground.R
@@ -410,7 +411,7 @@ private fun PokemonGrid(
     ) {
         items(
             count = pagingItems.itemCount,
-            key = { index -> pagingItems[index]?.id ?: index },
+            key = pagingItems.itemKey { it.id },
             contentType = { "pokemon_grid" },
         ) { index ->
             val pokemon = pagingItems[index]
@@ -469,7 +470,7 @@ private fun PokemonList(
     ) {
         items(
             count = pagingItems.itemCount,
-            key = { index -> pagingItems[index]?.id ?: index },
+            key = pagingItems.itemKey { it.id },
             contentType = { "pokemon_list" },
         ) { index ->
             val pokemon = pagingItems[index]

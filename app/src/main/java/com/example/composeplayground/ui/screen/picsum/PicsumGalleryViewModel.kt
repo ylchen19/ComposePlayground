@@ -199,6 +199,7 @@ class PicsumGalleryViewModel(
     private suspend fun loadAllPhotos(): List<PicsumPhoto> = allPhotosMutex.withLock {
         allPhotosCache ?: run {
             val accumulated = mutableListOf<PicsumPhoto>()
+            val seenIds = mutableSetOf<String>()
             val semaphore = Semaphore(BULK_CONCURRENCY)
             var nextPage = 1
             var reachedEnd = false
@@ -223,7 +224,12 @@ class PicsumGalleryViewModel(
                         reachedEnd = true
                         break
                     }
-                    accumulated.addAll(batch)
+                    // Picsum API 在不同 page 間可能回傳重複 ID，按 ID deduplicate
+                    for (photo in batch) {
+                        if (seenIds.add(photo.id)) {
+                            accumulated.add(photo)
+                        }
+                    }
                     goodPagesInBatch++
                 }
                 // 若最後一個成功頁已短於 BULK_PAGE_LIMIT，後面必然是空頁，視為到尾。
