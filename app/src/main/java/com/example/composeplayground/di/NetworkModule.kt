@@ -24,6 +24,7 @@ val appNetworkModule = module {
     // ── URL 設定 ──────────────────────────────────────────────────────────────
     single(named("baseUrl")) { "https://pokeapi.co/api/v2/" }
     single(named("picsumBaseUrl")) { "https://picsum.photos/" }
+    single(named("animeBaseUrl")) { "https://api.jikan.moe/v4/" }
     // PokéAPI 無需 Token 刷新；refreshUrl 保留作為未來串接需認證 API 時的擴充點
     single(named("refreshUrl")) { "" }
 
@@ -38,11 +39,21 @@ val appNetworkModule = module {
         get<HttpClientFactory>().create(baseUrl = get(named("picsumBaseUrl")))
     }
 
+    // 第三個 HttpClient 指向 Jikan REST API（無需認證）。
+    single<HttpClient>(named("animeClient")) {
+        get<HttpClientFactory>().create(baseUrl = get(named("animeBaseUrl")))
+    }
+
     // ── API 服務 ──────────────────────────────────────────────────────────────
     single<ApiService> { KtorApiService(get(), get()) }
 
     // 給 Picsum 用的獨立 ApiService 實例，使用 named qualifier 區分
     single<ApiService>(named("picsumApi")) {
         KtorApiService(get(named("picsumClient")), get())
+    }
+
+    // 給 Anime（Jikan）用的獨立 ApiService 實例
+    single<ApiService>(named("animeApi")) {
+        KtorApiService(get(named("animeClient")), get())
     }
 }

@@ -53,3 +53,15 @@ data class PicsumDetail(
     val originalWidth: Int,
     val originalHeight: Int,
 ) : NavKey
+
+/** Anime 列表（Jikan API），支援搜尋、類型篩選、排序。 */
+@Serializable
+data object AnimeHome : NavKey
+
+/**
+ * Anime 詳細頁。
+ *
+ * @param animeId MyAnimeList 的 mal_id，由列表頁傳入再透過 Koin parametersOf 注入。
+ */
+@Serializable
+data class AnimeDetail(val animeId: Int) : NavKey

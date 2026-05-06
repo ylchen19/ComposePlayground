@@ -26,6 +26,8 @@
     <string name="feature_pokemon_subtitle">瀏覽全部寶可夢、依屬性分類、查看詳細資訊</string>
     <string name="feature_picsum_title">Picsum 圖庫</string>
     <string name="feature_picsum_subtitle">載入大量圖片，示範 Coil 快取與 Paging 串流</string>
+    <string name="feature_anime_title">動畫資料庫</string>
+    <string name="feature_anime_subtitle">透過 Jikan API 搜尋動畫、瀏覽角色與推薦</string>
     <string name="stat_hp">HP</string>
     <string name="stat_atk">攻擊</string>
     <string name="stat_def">防禦</string>
@@ -50,4 +52,26 @@
     <string name="developer_options">開發者選項</string>
     <string name="show_perf_dashboard">顯示效能儀表板</string>
     <string name="show_perf_dashboard_desc">即時監控 FPS、記憶體與重組次數。</string>
+    <string name="anime_title">Anime</string>
+    <string name="anime_search_placeholder">搜尋動畫…</string>
+    <string name="anime_error_load_list">載入動畫失敗</string>
+    <string name="anime_error_load_detail">載入動畫詳細資訊失敗</string>
+    <string name="anime_error_load_genres">載入類型失敗</string>
+    <string name="anime_empty_list">找不到符合的動畫</string>
+    <string name="anime_action_retry">重試</string>
+    <string name="anime_action_show_less">顯示較少</string>
+    <string name="anime_action_read_more">閱讀更多</string>
+    <string name="anime_sort_descending">降冪</string>
+    <string name="anime_sort_ascending">升冪</string>
+    <string name="anime_switch_list">切換為列表</string>
+    <string name="anime_switch_grid">切換為網格</string>
+    <string name="anime_section_synopsis">劇情簡介</string>
+    <string name="anime_section_characters">角色</string>
+    <string name="anime_section_recommendations">推薦</string>
+    <string name="anime_sort_score">評分</string>
+    <string name="anime_sort_popularity">人氣</string>
+    <string name="anime_sort_rank">排名</string>
+    <string name="anime_sort_title">標題</string>
+    <string name="anime_sort_start_date">開始日期</string>
+    <string name="anime_sort_episodes">集數</string>
 </resources>

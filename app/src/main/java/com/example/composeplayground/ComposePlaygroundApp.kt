@@ -1,6 +1,7 @@
 package com.example.composeplayground
 
 import android.app.Application
+import com.example.composeplayground.di.animeModule
 import com.example.composeplayground.di.appNetworkModule
 import com.example.composeplayground.di.picsumModule
 import com.example.composeplayground.di.pokemonModule
@@ -20,6 +21,7 @@ class ComposePlaygroundApp : Application() {
                 appNetworkModule,
                 pokemonModule,
                 picsumModule,
+                animeModule,
             )
         }
     }

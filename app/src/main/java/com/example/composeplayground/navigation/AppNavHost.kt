@@ -14,6 +14,10 @@ import androidx.navigation3.ui.LocalNavAnimatedContentScope
 import androidx.navigation3.ui.NavDisplay
 import com.example.composeplayground.ui.screen.HomeMenuScreen
 import com.example.composeplayground.ui.screen.SettingsScreen
+import com.example.composeplayground.ui.screen.anime.AnimeDetailScreen
+import com.example.composeplayground.ui.screen.anime.AnimeDetailViewModel
+import com.example.composeplayground.ui.screen.anime.AnimeListScreen
+import com.example.composeplayground.ui.screen.anime.AnimeListViewModel
 import com.example.composeplayground.ui.screen.picsum.PicsumDetailScreen
 import com.example.composeplayground.ui.screen.picsum.PicsumDetailViewModel
 import com.example.composeplayground.ui.screen.picsum.PicsumGalleryScreen
@@ -82,6 +86,7 @@ fun AppNavHost(modifier: Modifier = Modifier) {
                 HomeMenuScreen(
                     onNavigateToPokemon = { navigate { backStack.add(PokemonHome) } },
                     onNavigateToPicsum = { navigate { backStack.add(PicsumGallery) } },
+                    onNavigateToAnime = { navigate { backStack.add(AnimeHome) } },
                     onNavigateToSettings = { navigate { backStack.add(Settings) } },
                 )
             }
@@ -154,6 +159,24 @@ fun AppNavHost(modifier: Modifier = Modifier) {
                 PicsumDetailScreen(
                     viewModel = viewModel,
                     onBack = { navigate { backStack.removeLastOrNull() } },
+                )
+            }
+            entry<AnimeHome> {
+                val viewModel = koinViewModel<AnimeListViewModel>()
+                AnimeListScreen(
+                    viewModel = viewModel,
+                    onNavigateToDetail = { id -> navigate { backStack.add(AnimeDetail(id)) } },
+                    onBack = { navigate { backStack.removeLastOrNull() } },
+                )
+            }
+            entry<AnimeDetail> { key ->
+                val viewModel = koinViewModel<AnimeDetailViewModel>(
+                    parameters = { parametersOf(key.animeId) },
+                )
+                AnimeDetailScreen(
+                    viewModel = viewModel,
+                    onBack = { navigate { backStack.removeLastOrNull() } },
+                    onNavigateToAnime = { id -> navigate { backStack.add(AnimeDetail(id)) } },
                 )
             }
         },

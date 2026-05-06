@@ -16,6 +16,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.CatchingPokemon
+import androidx.compose.material.icons.filled.Movie
 import androidx.compose.material.icons.filled.PhotoLibrary
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.Card
@@ -45,6 +46,7 @@ import com.example.composeplayground.R
 fun HomeMenuScreen(
     onNavigateToPokemon: () -> Unit,
     onNavigateToPicsum: () -> Unit,
+    onNavigateToAnime: () -> Unit,
     onNavigateToSettings: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -78,6 +80,15 @@ fun HomeMenuScreen(
                         title = stringResource(R.string.feature_picsum_title),
                         subtitle = stringResource(R.string.feature_picsum_subtitle),
                         onClick = onNavigateToPicsum,
+                    )
+                    FeatureCard(
+                        icon = Icons.Filled.Movie,
+                        iconBackgroundColor = MaterialTheme.colorScheme.tertiary,
+                        containerColor = MaterialTheme.colorScheme.tertiaryContainer,
+                        contentColor = MaterialTheme.colorScheme.onTertiaryContainer,
+                        title = stringResource(R.string.feature_anime_title),
+                        subtitle = stringResource(R.string.feature_anime_subtitle),
+                        onClick = onNavigateToAnime,
                     )
                 }
             }
