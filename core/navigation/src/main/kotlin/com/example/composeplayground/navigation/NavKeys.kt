@@ -65,3 +65,7 @@ data object AnimeHome : NavKey
  */
 @Serializable
 data class AnimeDetail(val animeId: Int) : NavKey
+
+/** 相機即時濾鏡預覽，透過 CameraX ImageAnalysis 對每幀套用 ColorMatrix 色彩效果。 */
+@Serializable
+data object CameraHome : NavKey

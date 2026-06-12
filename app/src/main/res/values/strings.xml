@@ -28,6 +28,8 @@
     <string name="feature_picsum_subtitle">載入大量圖片，示範 Coil 快取與 Paging 串流</string>
     <string name="feature_anime_title">動畫資料庫</string>
     <string name="feature_anime_subtitle">透過 Jikan API 搜尋動畫、瀏覽角色與推薦</string>
+    <string name="feature_camera_title">相機濾鏡</string>
+    <string name="feature_camera_subtitle">即時套用色彩濾鏡效果，CameraX + ColorMatrix 展示</string>
     <string name="stat_hp">HP</string>
     <string name="stat_atk">攻擊</string>
     <string name="stat_def">防禦</string>

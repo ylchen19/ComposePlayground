@@ -20,6 +20,7 @@ lifecycleViewmodelNav3 = "2.11.0-beta01"
 material3AdaptiveNav3 = "1.3.0-alpha10"
 mlkitImageLabeling = "17.0.9"
 mlkitGenaiPrompt = "1.0.0-beta2"
+camerax = "1.4.1"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -59,6 +60,9 @@ kotlinx-coroutines-test = { group = "org.jetbrains.kotlinx", name = "kotlinx-cor
 androidx-datastore-preferences = { group = "androidx.datastore", name = "datastore-preferences", version.ref = "datastorePreferences" }
 mlkit-image-labeling = { group = "com.google.mlkit", name = "image-labeling", version.ref = "mlkitImageLabeling" }
 mlkit-genai-prompt = { group = "com.google.mlkit", name = "genai-prompt", version.ref = "mlkitGenaiPrompt" }
+camerax-core     = { group = "androidx.camera", name = "camera-core",      version.ref = "camerax" }
+camerax-camera2  = { group = "androidx.camera", name = "camera-camera2",   version.ref = "camerax" }
+camerax-lifecycle = { group = "androidx.camera", name = "camera-lifecycle", version.ref = "camerax" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

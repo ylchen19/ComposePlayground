@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
+import androidx.compose.material.icons.filled.CameraAlt
 import androidx.compose.material.icons.filled.CatchingPokemon
 import androidx.compose.material.icons.filled.Movie
 import androidx.compose.material.icons.filled.PhotoLibrary
@@ -47,6 +48,7 @@ fun HomeMenuScreen(
     onNavigateToPokemon: () -> Unit,
     onNavigateToPicsum: () -> Unit,
     onNavigateToAnime: () -> Unit,
+    onNavigateToCamera: () -> Unit,
     onNavigateToSettings: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -89,6 +91,15 @@ fun HomeMenuScreen(
                         title = stringResource(R.string.feature_anime_title),
                         subtitle = stringResource(R.string.feature_anime_subtitle),
                         onClick = onNavigateToAnime,
+                    )
+                    FeatureCard(
+                        icon = Icons.Filled.CameraAlt,
+                        iconBackgroundColor = MaterialTheme.colorScheme.error,
+                        containerColor = MaterialTheme.colorScheme.errorContainer,
+                        contentColor = MaterialTheme.colorScheme.onErrorContainer,
+                        title = stringResource(R.string.feature_camera_title),
+                        subtitle = stringResource(R.string.feature_camera_subtitle),
+                        onClick = onNavigateToCamera,
                     )
                 }
             }

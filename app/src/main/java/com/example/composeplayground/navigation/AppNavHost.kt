@@ -13,6 +13,8 @@ import androidx.navigation3.runtime.rememberSaveableStateHolderNavEntryDecorator
 import androidx.navigation3.ui.LocalNavAnimatedContentScope
 import androidx.navigation3.ui.NavDisplay
 import com.example.composeplayground.ui.screen.HomeMenuScreen
+import com.example.composeplayground.ui.screen.camera.CameraFilterScreen
+import com.example.composeplayground.ui.screen.camera.CameraFilterViewModel
 import com.example.composeplayground.ui.screen.SettingsScreen
 import com.example.composeplayground.ui.screen.anime.AnimeDetailScreen
 import com.example.composeplayground.ui.screen.anime.AnimeDetailViewModel
@@ -87,6 +89,7 @@ fun AppNavHost(modifier: Modifier = Modifier) {
                     onNavigateToPokemon = { navigate { backStack.add(PokemonHome) } },
                     onNavigateToPicsum = { navigate { backStack.add(PicsumGallery) } },
                     onNavigateToAnime = { navigate { backStack.add(AnimeHome) } },
+                    onNavigateToCamera = { navigate { backStack.add(CameraHome) } },
                     onNavigateToSettings = { navigate { backStack.add(Settings) } },
                 )
             }
@@ -166,6 +169,13 @@ fun AppNavHost(modifier: Modifier = Modifier) {
                 AnimeListScreen(
                     viewModel = viewModel,
                     onNavigateToDetail = { id -> navigate { backStack.add(AnimeDetail(id)) } },
+                    onBack = { navigate { backStack.removeLastOrNull() } },
+                )
+            }
+            entry<CameraHome> {
+                val viewModel = koinViewModel<CameraFilterViewModel>()
+                CameraFilterScreen(
+                    viewModel = viewModel,
                     onBack = { navigate { backStack.removeLastOrNull() } },
                 )
             }
