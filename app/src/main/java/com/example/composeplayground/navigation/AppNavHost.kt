@@ -13,8 +13,8 @@ import androidx.navigation3.runtime.rememberSaveableStateHolderNavEntryDecorator
 import androidx.navigation3.ui.LocalNavAnimatedContentScope
 import androidx.navigation3.ui.NavDisplay
 import com.example.composeplayground.ui.screen.HomeMenuScreen
-import com.example.composeplayground.ui.screen.camera.CameraFilterScreen
-import com.example.composeplayground.ui.screen.camera.CameraFilterViewModel
+import com.example.composeplayground.ui.screen.camera.CameraScreen
+import com.example.composeplayground.ui.screen.camera.CameraViewModel
 import com.example.composeplayground.ui.screen.SettingsScreen
 import com.example.composeplayground.ui.screen.anime.AnimeDetailScreen
 import com.example.composeplayground.ui.screen.anime.AnimeDetailViewModel
@@ -173,8 +173,8 @@ fun AppNavHost(modifier: Modifier = Modifier) {
                 )
             }
             entry<CameraHome> {
-                val viewModel = koinViewModel<CameraFilterViewModel>()
-                CameraFilterScreen(
+                val viewModel = koinViewModel<CameraViewModel>()
+                CameraScreen(
                     viewModel = viewModel,
                     onBack = { navigate { backStack.removeLastOrNull() } },
                 )
