@@ -20,6 +20,11 @@ import com.example.composeplayground.ui.screen.anime.AnimeDetailScreen
 import com.example.composeplayground.ui.screen.anime.AnimeDetailViewModel
 import com.example.composeplayground.ui.screen.anime.AnimeListScreen
 import com.example.composeplayground.ui.screen.anime.AnimeListViewModel
+import com.example.composeplayground.ui.screen.music.MusicDetailScreen
+import com.example.composeplayground.ui.screen.music.MusicDetailViewModel
+import com.example.composeplayground.ui.screen.music.MusicSearchScreen
+import com.example.composeplayground.ui.screen.music.MusicSearchViewModel
+import com.example.composeplayground.data.model.Track
 import com.example.composeplayground.ui.screen.picsum.PicsumDetailScreen
 import com.example.composeplayground.ui.screen.picsum.PicsumDetailViewModel
 import com.example.composeplayground.ui.screen.picsum.PicsumGalleryScreen
@@ -90,6 +95,7 @@ fun AppNavHost(modifier: Modifier = Modifier) {
                     onNavigateToPicsum = { navigate { backStack.add(PicsumGallery) } },
                     onNavigateToAnime = { navigate { backStack.add(AnimeHome) } },
                     onNavigateToCamera = { navigate { backStack.add(CameraHome) } },
+                    onNavigateToMusic = { navigate { backStack.add(MusicHome) } },
                     onNavigateToSettings = { navigate { backStack.add(Settings) } },
                 )
             }
@@ -187,6 +193,50 @@ fun AppNavHost(modifier: Modifier = Modifier) {
                     viewModel = viewModel,
                     onBack = { navigate { backStack.removeLastOrNull() } },
                     onNavigateToAnime = { id -> navigate { backStack.add(AnimeDetail(id)) } },
+                )
+            }
+            entry<MusicHome> {
+                val viewModel = koinViewModel<MusicSearchViewModel>()
+                MusicSearchScreen(
+                    viewModel = viewModel,
+                    onNavigateToDetail = { track ->
+                        navigate {
+                            backStack.add(
+                                MusicDetail(
+                                    id = track.id,
+                                    trackName = track.trackName,
+                                    artistName = track.artistName,
+                                    collectionName = track.collectionName,
+                                    artworkUrl = track.artworkUrl,
+                                    previewUrl = track.previewUrl,
+                                    trackTimeMillis = track.trackTimeMillis,
+                                    releaseDate = track.releaseDate,
+                                    genre = track.genre,
+                                ),
+                            )
+                        }
+                    },
+                    onBack = { navigate { backStack.removeLastOrNull() } },
+                )
+            }
+            entry<MusicDetail> { key ->
+                val track = Track(
+                    id = key.id,
+                    trackName = key.trackName,
+                    artistName = key.artistName,
+                    collectionName = key.collectionName,
+                    artworkUrl = key.artworkUrl,
+                    previewUrl = key.previewUrl,
+                    trackTimeMillis = key.trackTimeMillis,
+                    releaseDate = key.releaseDate,
+                    genre = key.genre,
+                )
+                val viewModel = koinViewModel<MusicDetailViewModel>(
+                    parameters = { parametersOf(track) },
+                )
+                MusicDetailScreen(
+                    viewModel = viewModel,
+                    onBack = { navigate { backStack.removeLastOrNull() } },
                 )
             }
         },

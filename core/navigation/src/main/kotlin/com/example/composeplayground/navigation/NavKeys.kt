@@ -69,3 +69,25 @@ data class AnimeDetail(val animeId: Int) : NavKey
 /** 相機即時濾鏡預覽，透過 CameraX ImageAnalysis 對每幀套用 ColorMatrix 色彩效果。 */
 @Serializable
 data object CameraHome : NavKey
+
+/** 音樂搜尋列表（iTunes Search API），依歌手/歌曲關鍵字搜尋。 */
+@Serializable
+data object MusicHome : NavKey
+
+/**
+ * 曲目詳細頁。
+ *
+ * 搜尋結果本身已含完整欄位，直接攜帶於 NavKey 避免再回打 API 查單筆。
+ */
+@Serializable
+data class MusicDetail(
+    val id: Long,
+    val trackName: String,
+    val artistName: String,
+    val collectionName: String?,
+    val artworkUrl: String,
+    val previewUrl: String?,
+    val trackTimeMillis: Long?,
+    val releaseDate: String?,
+    val genre: String?,
+) : NavKey

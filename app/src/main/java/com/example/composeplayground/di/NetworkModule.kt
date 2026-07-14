@@ -25,6 +25,8 @@ val appNetworkModule = module {
     single(named("baseUrl")) { "https://pokeapi.co/api/v2/" }
     single(named("picsumBaseUrl")) { "https://picsum.photos/" }
     single(named("animeBaseUrl")) { "https://api.jikan.moe/v4/" }
+    single(named("musicBaseUrl")) { "https://itunes.apple.com/" }
+    single(named("musicChartsBaseUrl")) { "https://rss.marketingtools.apple.com/" }
     // PokéAPI 無需 Token 刷新；refreshUrl 保留作為未來串接需認證 API 時的擴充點
     single(named("refreshUrl")) { "" }
 
@@ -44,6 +46,16 @@ val appNetworkModule = module {
         get<HttpClientFactory>().create(baseUrl = get(named("animeBaseUrl")))
     }
 
+    // 第四個 HttpClient 指向 iTunes Search API（無需認證）。
+    single<HttpClient>(named("musicClient")) {
+        get<HttpClientFactory>().create(baseUrl = get(named("musicBaseUrl")))
+    }
+
+    // 第五個 HttpClient 指向 Apple Music 排行榜 RSS Feed（無需認證）。
+    single<HttpClient>(named("musicChartsClient")) {
+        get<HttpClientFactory>().create(baseUrl = get(named("musicChartsBaseUrl")))
+    }
+
     // ── API 服務 ──────────────────────────────────────────────────────────────
     single<ApiService> { KtorApiService(get(), get()) }
 
@@ -55,5 +67,15 @@ val appNetworkModule = module {
     // 給 Anime（Jikan）用的獨立 ApiService 實例
     single<ApiService>(named("animeApi")) {
         KtorApiService(get(named("animeClient")), get())
+    }
+
+    // 給 Music（iTunes Search）用的獨立 ApiService 實例
+    single<ApiService>(named("musicApi")) {
+        KtorApiService(get(named("musicClient")), get())
+    }
+
+    // 給 Music 排行榜（Apple Music RSS Feed）用的獨立 ApiService 實例
+    single<ApiService>(named("musicChartsApi")) {
+        KtorApiService(get(named("musicChartsClient")), get())
     }
 }

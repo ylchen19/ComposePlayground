@@ -4,6 +4,7 @@ import android.app.Application
 import com.example.composeplayground.di.animeModule
 import com.example.composeplayground.di.cameraModule
 import com.example.composeplayground.di.appNetworkModule
+import com.example.composeplayground.di.musicModule
 import com.example.composeplayground.di.picsumModule
 import com.example.composeplayground.di.pokemonModule
 import com.example.composeplayground.network.di.coreNetworkModule
@@ -24,6 +25,7 @@ class ComposePlaygroundApp : Application() {
                 picsumModule,
                 animeModule,
                 cameraModule,
+                musicModule,
             )
         }
     }

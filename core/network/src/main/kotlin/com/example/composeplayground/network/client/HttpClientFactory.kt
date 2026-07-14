@@ -52,13 +52,17 @@ class HttpClientFactory(
 
             // JSON 反序列化設定：忽略多餘欄位、允許寬鬆格式、型別不符時退回預設值
             install(ContentNegotiation) {
-                json(Json {
+                val json = Json {
                     ignoreUnknownKeys = true
                     isLenient = true
                     prettyPrint = false
                     encodeDefaults = true
                     coerceInputValues = true  // 欄位型別不符時使用預設值而非拋出例外（PokéAPI 部分欄位可能為 null）
-                })
+                }
+                json(json)
+                // 部分第三方 API（如 iTunes Search）為相容 JSONP 而回傳
+                // Content-Type: text/javascript，內容其實仍是 JSON，額外註冊此型別避免反序列化失敗。
+                json(json, contentType = ContentType.Text.JavaScript)
             }
 
             // 輸出完整請求/回應日誌，便於開發期除錯
