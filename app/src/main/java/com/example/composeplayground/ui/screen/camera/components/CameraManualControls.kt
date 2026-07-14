@@ -79,7 +79,7 @@ internal fun FocusControls(
     ) {
         ManualControlSlider(
             label = "對焦",
-            valueLabel = if (uiState.isManualFocus) "${"%.2f".format(uiState.focusDistance)}" else "AF",
+            valueLabel = if (uiState.isManualFocus) "%.2f".format(uiState.focusDistance) else "AF",
             isManual = uiState.isManualFocus,
             onManualChange = onManualFocusToggle,
             value = uiState.focusDistance,
@@ -133,7 +133,12 @@ private fun ManualControlSlider(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween,
         ) {
-            ControlLabel(label = label, valueLabel = valueLabel, active = isManual)
+            ControlLabel(
+                label = label,
+                valueLabel = valueLabel,
+                active = isManual,
+                modifier = Modifier.weight(1f),
+            )
             Switch(checked = isManual, onCheckedChange = onManualChange)
         }
         Slider(
@@ -157,7 +162,12 @@ private fun ControlSlider(
     modifier: Modifier = Modifier,
 ) {
     Column(modifier = modifier.fillMaxWidth()) {
-        ControlLabel(label = label, valueLabel = valueLabel, active = enabled)
+        ControlLabel(
+            label = label,
+            valueLabel = valueLabel,
+            active = enabled,
+            modifier = Modifier.fillMaxWidth(),
+        )
         Slider(
             value = value.coerceIn(valueRange.start, valueRange.endInclusive),
             onValueChange = onValueChange,
@@ -176,7 +186,7 @@ private fun ControlLabel(
     modifier: Modifier = Modifier,
 ) {
     Row(
-        modifier = modifier.fillMaxWidth(),
+        modifier = modifier,
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically,
     ) {
