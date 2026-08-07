@@ -60,6 +60,8 @@ dependencies {
     implementation("androidx.compose.material:material-icons-extended")
     implementation(libs.koin.android)
     implementation(libs.koin.androidx.compose)
+    // :core:designsystem 以 implementation 引入 DataStore，不會傳遞到 :app 的 compile classpath
+    implementation(libs.androidx.datastore.preferences)
     implementation(libs.coil.compose)
     implementation(libs.coil.network.okhttp)
     implementation(libs.navigation3.ui)
