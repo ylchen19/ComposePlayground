@@ -1,7 +1,10 @@
 package com.example.composeplayground.di
 
+import com.example.composeplayground.data.repository.AlbumRoulettePreferencesRepository
+import com.example.composeplayground.data.repository.DataStoreAlbumRoulettePreferencesRepository
 import com.example.composeplayground.data.repository.MusicRepository
 import com.example.composeplayground.data.repository.MusicRepositoryImpl
+import com.example.composeplayground.ui.screen.music.AlbumRouletteViewModel
 import com.example.composeplayground.ui.screen.music.MusicDetailViewModel
 import com.example.composeplayground.ui.screen.music.MusicSearchViewModel
 import org.koin.core.module.dsl.viewModel
@@ -19,6 +22,9 @@ val musicModule = module {
         MusicRepositoryImpl(get(named("musicApi")), get(named("musicChartsApi")))
     }
 
+    single<AlbumRoulettePreferencesRepository> { DataStoreAlbumRoulettePreferencesRepository(get()) }
+
     viewModel { MusicSearchViewModel(get()) }
     viewModel { params -> MusicDetailViewModel(track = params.get()) }
+    viewModel { AlbumRouletteViewModel(get(), get()) }
 }

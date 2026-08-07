@@ -107,4 +107,17 @@
     <string name="music_region_france">法國（法文）</string>
     <string name="music_region_germany">德國（德文）</string>
     <string name="music_region_spain">西班牙（西文）</string>
+    <string name="music_roulette_title">隨機專輯推薦</string>
+    <string name="music_roulette_skip">跳過</string>
+    <string name="music_roulette_like">喜歡</string>
+    <string name="music_roulette_reshuffle">重新洗牌</string>
+    <string name="music_roulette_clear_exclusions">清除排除</string>
+    <string name="music_roulette_deck_finished">這批專輯都看完了，洗牌再來一輪</string>
+    <string name="music_roulette_all_excluded">沒有符合條件的專輯，試著減少排除的類別</string>
+    <string name="music_roulette_liked_title">喜歡的專輯</string>
+    <string name="music_roulette_liked_empty">還沒有收藏，右滑卡片就會加進來</string>
+    <string name="music_roulette_liked_remove">移除收藏</string>
+    <string name="music_roulette_reset_taste">重設推薦偏好</string>
+    <string name="music_roulette_reason_genre">因為你常喜歡 %1$s</string>
+    <string name="music_roulette_reason_artist">因為你喜歡 %1$s 的作品</string>
 </resources>
