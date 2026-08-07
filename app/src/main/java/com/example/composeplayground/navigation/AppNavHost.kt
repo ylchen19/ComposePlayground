@@ -1,10 +1,13 @@
 package com.example.composeplayground.navigation
 
+import android.content.Intent
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
+import androidx.core.net.toUri
 import androidx.lifecycle.viewmodel.navigation3.rememberViewModelStoreNavEntryDecorator
 import androidx.navigation3.runtime.NavEntryDecorator
 import androidx.navigation3.runtime.entryProvider
@@ -20,6 +23,8 @@ import com.example.composeplayground.ui.screen.anime.AnimeDetailScreen
 import com.example.composeplayground.ui.screen.anime.AnimeDetailViewModel
 import com.example.composeplayground.ui.screen.anime.AnimeListScreen
 import com.example.composeplayground.ui.screen.anime.AnimeListViewModel
+import com.example.composeplayground.ui.screen.music.AlbumRouletteScreen
+import com.example.composeplayground.ui.screen.music.AlbumRouletteViewModel
 import com.example.composeplayground.ui.screen.music.MusicDetailScreen
 import com.example.composeplayground.ui.screen.music.MusicDetailViewModel
 import com.example.composeplayground.ui.screen.music.MusicSearchScreen
@@ -216,7 +221,18 @@ fun AppNavHost(modifier: Modifier = Modifier) {
                             )
                         }
                     },
+                    onNavigateToRoulette = { navigate { backStack.add(MusicAlbumRoulette) } },
                     onBack = { navigate { backStack.removeLastOrNull() } },
+                )
+            }
+            entry<MusicAlbumRoulette> {
+                val context = LocalContext.current
+                AlbumRouletteScreen(
+                    viewModel = koinViewModel<AlbumRouletteViewModel>(),
+                    onBack = { navigate { backStack.removeLastOrNull() } },
+                    onOpenExternalUrl = { url ->
+                        context.startActivity(Intent(Intent.ACTION_VIEW, url.toUri()))
+                    },
                 )
             }
             entry<MusicDetail> { key ->

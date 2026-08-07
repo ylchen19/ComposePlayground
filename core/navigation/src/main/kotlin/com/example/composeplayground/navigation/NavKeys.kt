@@ -74,6 +74,10 @@ data object CameraHome : NavKey
 @Serializable
 data object MusicHome : NavKey
 
+/** 隨機專輯推薦，排除不想看的類別／地區後以滑卡方式逐張推薦。 */
+@Serializable
+data object MusicAlbumRoulette : NavKey
+
 /**
  * 曲目詳細頁。
  *

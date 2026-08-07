@@ -16,6 +16,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Casino
 import androidx.compose.material.icons.filled.MusicNote
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Search
@@ -58,6 +59,7 @@ import com.example.composeplayground.ui.screen.music.components.MusicRegionFilte
 fun MusicSearchScreen(
     viewModel: MusicSearchViewModel,
     onNavigateToDetail: (Track) -> Unit,
+    onNavigateToRoulette: () -> Unit,
     onBack: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -80,6 +82,15 @@ fun MusicSearchScreen(
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                             contentDescription = "Back",
+                            tint = MaterialTheme.colorScheme.onPrimaryContainer,
+                        )
+                    }
+                },
+                actions = {
+                    IconButton(onClick = onNavigateToRoulette) {
+                        Icon(
+                            imageVector = Icons.Default.Casino,
+                            contentDescription = stringResource(R.string.music_roulette_title),
                             tint = MaterialTheme.colorScheme.onPrimaryContainer,
                         )
                     }
