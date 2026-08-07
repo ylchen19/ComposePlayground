@@ -3,6 +3,7 @@ package com.example.composeplayground.data.paging
 import androidx.paging.PagingConfig
 import androidx.paging.PagingSource.LoadResult
 import androidx.paging.testing.TestPager
+import com.example.composeplayground.data.model.Album
 import com.example.composeplayground.data.model.Track
 import com.example.composeplayground.data.model.TrackPage
 import com.example.composeplayground.data.repository.MusicGenre
@@ -41,6 +42,8 @@ class DailyChartsPagingSourceTest {
 
         override suspend fun fetchDailyCharts(limit: Int, genre: MusicGenre, region: MusicRegion): List<Track> =
             charts
+
+        override suspend fun fetchTopAlbums(region: MusicRegion, limit: Int): List<Album> = emptyList()
     }
 
     private fun makePager(repository: MusicRepository) = TestPager(

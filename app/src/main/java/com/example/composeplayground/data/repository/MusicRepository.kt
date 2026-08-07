@@ -1,5 +1,6 @@
 package com.example.composeplayground.data.repository
 
+import com.example.composeplayground.data.model.Album
 import com.example.composeplayground.data.model.Track
 import com.example.composeplayground.data.model.TrackPage
 
@@ -31,10 +32,22 @@ interface MusicRepository {
      */
     suspend fun fetchDailyCharts(limit: Int, genre: MusicGenre, region: MusicRegion): List<Track>
 
+    /**
+     * 取得單一地區的熱門專輯榜，供隨機專輯推薦組成抽選池。
+     *
+     * 與 [fetchDailyCharts] 不同，專輯 RSS Feed 的 payload 已包含名稱、藝人、封面與
+     * 類別，故只需一次請求、不必再以 lookup 補欄位。
+     *
+     * @param region 榜單地區，對應 iTunes storefront
+     * @param limit 榜單筆數上限，建議使用 [TOP_ALBUMS_LIMIT]
+     */
+    suspend fun fetchTopAlbums(region: MusicRegion, limit: Int): List<Album>
+
     companion object {
         const val MAX_PAGE_SIZE = 25
         const val MAX_RESULTS = 200
         const val DAILY_CHARTS_LIMIT = 50
+        const val TOP_ALBUMS_LIMIT = 100
     }
 }
 

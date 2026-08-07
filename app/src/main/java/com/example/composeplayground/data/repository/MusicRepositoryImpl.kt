@@ -1,9 +1,12 @@
 package com.example.composeplayground.data.repository
 
+import com.example.composeplayground.data.model.Album
+import com.example.composeplayground.data.model.AlbumFeedResponse
 import com.example.composeplayground.data.model.ChartsFeedResponse
 import com.example.composeplayground.data.model.ItunesSearchResponse
 import com.example.composeplayground.data.model.Track
 import com.example.composeplayground.data.model.TrackPage
+import com.example.composeplayground.data.model.toAlbum
 import com.example.composeplayground.data.model.toTrack
 import com.example.composeplayground.network.NetworkResult
 import com.example.composeplayground.network.api.ApiService
@@ -66,6 +69,14 @@ class MusicRepositoryImpl(
 
         // lookup 回傳順序不保證與排行榜名次一致，依原始排名重新排序後再套用曲風篩選。
         return rankedIds.mapNotNull { tracksById[it] }.filterByGenre(genre)
+    }
+
+    override suspend fun fetchTopAlbums(region: MusicRegion, limit: Int): List<Album> {
+        val feed = chartsApiService.get<AlbumFeedResponse>(
+            endpoint = "api/v2/${region.storefront}/music/most-played/$limit/albums.json",
+        ).getOrThrow()
+        // feed 的回傳順序就是榜單名次，保留下來給推薦排序當熱門度先驗。
+        return feed.feed.results.mapIndexedNotNull { rank, entry -> entry.toAlbum(region, rank) }
     }
 
     private fun List<Track>.filterByGenre(genre: MusicGenre): List<Track> {
