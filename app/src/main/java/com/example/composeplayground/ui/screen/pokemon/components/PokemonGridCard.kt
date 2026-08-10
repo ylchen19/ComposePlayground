@@ -8,7 +8,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
@@ -34,7 +34,7 @@ import java.util.Locale
  * 插圖區**全出血**貼齊卡片上緣，而不是在卡片內再嵌一個有邊距的方框——後者會疊出
  * 「卡片底色／插圖底色／文字區底色」三層深淺相近的灰階，看起來像沒對齊的盒中盒。
  *
- * 高度由結構保證一致（正方形插圖 + 單行名稱 + 固定高度屬性列），因此同一列的卡片
+ * 高度由結構保證一致（正方形插圖 + 單行名稱 + 單行屬性列），因此同一列的卡片
  * 不會參差不齊，呼叫端也不需要事先量測最長名稱的高度。
  *
  * 列表 API 不附帶屬性（見 `PokemonRepositoryImpl`），[Pokemon.types] 為空時整張卡
@@ -111,7 +111,9 @@ fun PokemonGridCard(
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(top = 8.dp)
-                        .height(TYPE_ROW_HEIGHT),
+                        // 只給下限不給固定高度：寫死高度會把「惡」「鋼」這類筆畫伸得較低的
+                        // 字切掉，而卡片高度本來就一致（每顆藥丸的固有高度相同）。
+                        .heightIn(min = TYPE_ROW_MIN_HEIGHT),
                     horizontalArrangement = Arrangement.spacedBy(6.dp, Alignment.CenterHorizontally),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
@@ -123,7 +125,7 @@ fun PokemonGridCard(
     }
 }
 
-private val TYPE_ROW_HEIGHT = 24.dp
+private val TYPE_ROW_MIN_HEIGHT = 24.dp
 
 /** 與 surface 的混色比例，愈大屬性色愈明顯。 */
 private const val CARD_TINT = 0.10f
