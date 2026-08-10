@@ -47,7 +47,6 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.composeplayground.R
 import com.example.composeplayground.ui.screen.pokemon.components.PokemonGridCard
 import com.example.composeplayground.ui.screen.pokemon.components.ShimmerGridCard
-import com.example.composeplayground.ui.screen.pokemon.components.UniformHeightLazyRow
 import com.example.composeplayground.ui.screen.pokemon.components.pokemonTypeColors
 import com.example.composeplayground.ui.theme.PokemonRed
 import com.example.composeplayground.ui.theme.PokemonYellow
@@ -118,14 +117,6 @@ private fun PokemonTypeSectionRow(
     // 卡片寬度隨系統字體縮放等比放大，上限 2×
     val fontScale = LocalDensity.current.fontScale
     val cardWidth = (140 * fontScale.coerceAtMost(2f)).dp
-    val textAreaWidth = cardWidth - 24.dp // Card 內 padding 12dp × 2
-    val nameStyle = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Bold)
-
-    // 取名稱最長的寶可夢名稱作為 probe（O(1) 比較）
-    val longestName = remember(section.pokemon) {
-        section.pokemon.maxByOrNull { it.name.length }
-            ?.name?.replaceFirstChar { c -> c.titlecase() } ?: ""
-    }
 
     Column(modifier = modifier.fillMaxWidth()) {
         // ── 屬性標題列 ─────────────────────────────────────────────────────────
@@ -204,45 +195,40 @@ private fun PokemonTypeSectionRow(
                 }
             }
 
-            UniformHeightLazyRow(
-                probeText = longestName,
-                probeStyle = nameStyle,
-                probeMaxWidth = textAreaWidth,
-            ) { minTextHeight ->
-                LazyRow(
-                    state = listState,
-                    contentPadding = PaddingValues(horizontal = 16.dp),
-                    horizontalArrangement = Arrangement.spacedBy(10.dp),
-                ) {
-                    items(
-                        count = minOf(visibleCount, section.pokemon.size),
-                        key = { index -> section.pokemon[index].id },
-                        // Gap 2: explicit contentType lets Compose recycle slots only among
-                        // structurally identical composables (cards with cards, loader with loader).
-                        contentType = { "pokemon_card" },
-                    ) { index ->
-                        PokemonGridCard(
-                            pokemon = section.pokemon[index],
-                            onClick = { onNavigateToDetail(section.pokemon[index].id) },
-                            modifier = Modifier.width(cardWidth),
-                            minTextHeight = minTextHeight,
-                        )
-                    }
-                    // 尾端載入指示器
-                    if (visibleCount < section.pokemon.size) {
-                        item(key = "loader_${section.typeName}", contentType = "loader") {
-                            Box(
-                                modifier = Modifier
-                                    .width(80.dp)
-                                    .height(180.dp),
-                                contentAlignment = Alignment.Center,
-                            ) {
-                                CircularProgressIndicator(
-                                    modifier = Modifier.size(28.dp),
-                                    color = typeColor,
-                                    strokeWidth = 2.dp,
-                                )
-                            }
+            // PokemonGridCard 的高度由結構固定（正方形插圖 + 單行名稱 + 固定高度屬性列），
+            // 不再需要先量測最長名稱的渲染高度來對齊同列卡片。
+            LazyRow(
+                state = listState,
+                contentPadding = PaddingValues(horizontal = 16.dp),
+                horizontalArrangement = Arrangement.spacedBy(10.dp),
+            ) {
+                items(
+                    count = minOf(visibleCount, section.pokemon.size),
+                    key = { index -> section.pokemon[index].id },
+                    // Gap 2: explicit contentType lets Compose recycle slots only among
+                    // structurally identical composables (cards with cards, loader with loader).
+                    contentType = { "pokemon_card" },
+                ) { index ->
+                    PokemonGridCard(
+                        pokemon = section.pokemon[index],
+                        onClick = { onNavigateToDetail(section.pokemon[index].id) },
+                        modifier = Modifier.width(cardWidth),
+                    )
+                }
+                // 尾端載入指示器
+                if (visibleCount < section.pokemon.size) {
+                    item(key = "loader_${section.typeName}", contentType = "loader") {
+                        Box(
+                            modifier = Modifier
+                                .width(80.dp)
+                                .height(180.dp),
+                            contentAlignment = Alignment.Center,
+                        ) {
+                            CircularProgressIndicator(
+                                modifier = Modifier.size(28.dp),
+                                color = typeColor,
+                                strokeWidth = 2.dp,
+                            )
                         }
                     }
                 }

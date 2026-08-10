@@ -1,5 +1,6 @@
 package com.example.composeplayground.ui.screen.pokemon.components
 
+import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.FilterChip
@@ -57,7 +58,11 @@ fun PokemonTypeLabel(
             fontSize = 11.sp,
             fontWeight = FontWeight.Bold,
             textAlign = TextAlign.Center,
-            modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp),
+            modifier = Modifier
+                .padding(horizontal = 10.dp, vertical = 4.dp)
+                // 最小寬度加在文字上（而非 Surface）：加在 Surface 會讓它吃滿父層寬度。
+                // 沒有下限的話「火」這種單字屬性會縮成圓球，與「一般」並排像兩種元件。
+                .defaultMinSize(minWidth = 32.dp),
         )
     }
 }

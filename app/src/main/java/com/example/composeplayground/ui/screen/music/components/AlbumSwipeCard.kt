@@ -8,11 +8,10 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
@@ -25,13 +24,13 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
 import com.example.composeplayground.R
@@ -59,13 +58,21 @@ fun AlbumSwipeCardStack(
         val dismissThreshold = constraints.maxWidth * DISMISS_THRESHOLD_RATIO
         val flyAwayDistance = constraints.maxWidth.toFloat() * 1.5f
 
+        // 卡片自己決定尺寸而不是 fillMaxSize：撐滿容器會在文字下方留下一大塊空白，
+        // 看起來像內容黏在卡片上緣。插圖維持正方形，空間不足時才縮小。
+        val artSide = minOf(maxWidth, maxHeight * ART_TO_HEIGHT_RATIO)
+        val cardModifier = Modifier.width(artSide)
+
         if (nextAlbum != null) {
             AlbumCard(
                 album = nextAlbum,
-                modifier = Modifier.graphicsLayer {
+                artSide = artSide,
+                modifier = cardModifier.graphicsLayer {
                     scaleX = BACK_CARD_SCALE
                     scaleY = BACK_CARD_SCALE
-                    translationY = BACK_CARD_OFFSET_Y
+                    // 縮放是以中心為原點，若只給固定位移，後方卡片會從「上緣」露出來，
+                    // 看起來像沒對齊。先補回縮放讓出的上半部高度，再往下推出可見的邊。
+                    translationY = (1f - BACK_CARD_SCALE) * size.height / 2f + BACK_CARD_PEEK.toPx()
                 },
             )
         }
@@ -77,6 +84,7 @@ fun AlbumSwipeCardStack(
 
             AlbumCard(
                 album = album,
+                artSide = artSide,
                 overlay = when {
                     offsetX.value > OVERLAY_REVEAL_PX -> SwipeDirection.Like
                     offsetX.value < -OVERLAY_REVEAL_PX -> SwipeDirection.Skip
@@ -84,7 +92,7 @@ fun AlbumSwipeCardStack(
                 },
                 overlayAlpha = (abs(offsetX.value) / dismissThreshold).coerceIn(0f, 1f),
                 onClick = { onOpenAlbum(album) },
-                modifier = Modifier
+                modifier = cardModifier
                     .graphicsLayer {
                         translationX = offsetX.value
                         rotationZ = offsetX.value / ROTATION_DAMPING
@@ -117,42 +125,42 @@ fun AlbumSwipeCardStack(
 @Composable
 private fun AlbumCard(
     album: Album,
+    artSide: Dp,
     modifier: Modifier = Modifier,
     overlay: SwipeDirection? = null,
     overlayAlpha: Float = 0f,
     onClick: (() -> Unit)? = null,
 ) {
     Card(
-        modifier = modifier.fillMaxSize(),
+        modifier = modifier,
         shape = RoundedCornerShape(24.dp),
         elevation = CardDefaults.cardElevation(defaultElevation = 6.dp),
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
         ),
     ) {
+        // 封面全出血貼齊卡片上緣，由 Card 的形狀裁切圓角；不再內嵌一個有邊距的方框。
+        Box(
+            modifier = Modifier
+                .size(artSide)
+                .then(if (onClick != null) Modifier.clickable(onClick = onClick) else Modifier),
+        ) {
+            AsyncImage(
+                model = album.artworkUrl,
+                contentDescription = album.name,
+                modifier = Modifier.fillMaxSize(),
+                contentScale = ContentScale.Crop,
+            )
+            if (overlay != null) {
+                SwipeOverlayLabel(direction = overlay, alpha = overlayAlpha)
+            }
+        }
         Column(
             modifier = Modifier
-                .fillMaxSize()
-                .padding(16.dp),
+                .fillMaxWidth()
+                .padding(horizontal = 20.dp, vertical = 16.dp),
+            verticalArrangement = Arrangement.spacedBy(4.dp),
         ) {
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .aspectRatio(1f)
-                    .clip(RoundedCornerShape(16.dp))
-                    .then(if (onClick != null) Modifier.clickable(onClick = onClick) else Modifier),
-            ) {
-                AsyncImage(
-                    model = album.artworkUrl,
-                    contentDescription = album.name,
-                    modifier = Modifier.fillMaxSize(),
-                    contentScale = ContentScale.Crop,
-                )
-                if (overlay != null) {
-                    SwipeOverlayLabel(direction = overlay, alpha = overlayAlpha)
-                }
-            }
-            Spacer(modifier = Modifier.height(16.dp))
             Text(
                 text = album.name,
                 style = MaterialTheme.typography.titleLarge,
@@ -160,22 +168,22 @@ private fun AlbumCard(
                 maxLines = 2,
                 overflow = TextOverflow.Ellipsis,
             )
-            Spacer(modifier = Modifier.height(4.dp))
             Text(
                 text = album.artistName,
                 style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
             )
-            Spacer(modifier = Modifier.height(8.dp))
-            Text(
-                text = album.subtitleLine(),
-                style = MaterialTheme.typography.labelMedium,
-                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
-                maxLines = 2,
-                overflow = TextOverflow.Ellipsis,
-            )
+            album.subtitleLine().takeIf { it.isNotBlank() }?.let { meta ->
+                Text(
+                    text = meta,
+                    style = MaterialTheme.typography.labelMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
+            }
         }
     }
 }
@@ -219,8 +227,14 @@ private fun Album.subtitleLine(): String = buildList {
 }.joinToString(" · ")
 
 private const val DISMISS_THRESHOLD_RATIO = 0.3f
-private const val BACK_CARD_SCALE = 0.92f
-private const val BACK_CARD_OFFSET_Y = 24f
+private const val BACK_CARD_SCALE = 0.94f
+
+/** 後方卡片從前卡下緣露出的高度。 */
+private val BACK_CARD_PEEK = 12.dp
+
+/** 封面邊長佔可用高度的比例，其餘留給文字區。 */
+private const val ART_TO_HEIGHT_RATIO = 0.62f
+
 private const val OVERLAY_REVEAL_PX = 8f
 private const val ROTATION_DAMPING = 40f
 private const val ANIMATION_MS = 250
